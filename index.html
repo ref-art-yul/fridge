@@ -177,28 +177,38 @@
                     <span id="detailsEmoji" style="font-size: 1.5rem;"></span>
                 </div>
                 
-                <!-- Переименование -->
-                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
-                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название</label>
-                    <input type="text" id="detailsName" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                <!-- СГРУППИРОВАННЫЙ РЯД: Название слева, Счетчики количества справа -->
+                <div style="display: flex; gap: 0.75rem; width: 100%; align-items: flex-end;">
+                    <!-- Поле Названия (занимает всё свободное место) -->
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+                        <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название</label>
+                        <input type="text" id="detailsName" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                    </div>
+                    
+                    <!-- Удобный горизонтальный счетчик количества -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; flex-shrink: 0;">
+                        <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Кол-во</label>
+                        <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2.35rem; box-sizing: border-box; overflow: hidden;">
+                            <!-- Кнопка Минус -->
+                            <button onclick="changeDetailsQtyBtn(-1)" style="width: 2.2rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
+                            <!-- Поле ввода цифры (без стрелочек) -->
+                            <input type="number" id="detailsQty" min="1" value="1" style="width: 2.2rem; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; -moz-appearance: textfield; margin: 0; outline: none;" class="scrollbar-none">
+                            <!-- Кнопка Плюс -->
+                            <button onclick="changeDetailsQtyBtn(1)" style="width: 2.2rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
+                        </div>
+                    </div>
                 </div>
-                
-                <!-- Изменение Полки внутри карточки -->
+
+                <!-- Блок изменения Полки (остается посередине карточки) -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Полка в холодильнике</label>
                     <div id="detailsShelfRadioContainer" style="display: flex; flex-wrap: wrap; gap: 0.4rem; width: 100%;"></div>
                 </div>
                 
-                <!-- Количество и Срок годности бок о бок -->
-                <div style="display: flex !important; flex-direction: row !important; gap: 0.75rem !important; width: 100% !important;">
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Количество</label>
-                        <input type="number" id="detailsQty" min="1" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
-                    </div>
-                    <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
-                        <label class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок (дней)</label>
-                        <input type="number" id="detailsDays" min="0" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
-                    </div>
+                <!-- Поле срока хранения перенесено строго вниз -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней осталось)</label>
+                    <input type="number" id="detailsDays" min="0" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                 </div>
                 
                 <!-- Кнопки управления: Иконка корзины (слева с отступом), Отмена и Сохранить (вместе справа) -->
@@ -689,6 +699,15 @@
 
         let activeEditingProductId = null;
         let detailsSelectedShelf = 'Верхняя';
+
+        function changeDetailsQtyBtn(direction) {
+            const input = document.getElementById('detailsQty');
+            if (!input) return;
+            let currentVal = parseInt(input.value) || 1;
+            currentVal += direction;
+            if (currentVal < 1) currentVal = 1; // Защита от ухода в ноль или минус
+            input.value = currentVal;
+        }
 
         function openProductDetailsModal(id) {
             const product = products.find(p => p.id === id);
