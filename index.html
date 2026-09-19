@@ -317,16 +317,31 @@
         ];
 
         // Инициализируем динамический список полок пользователя
-        let shelves = JSON.parse(localStorage.getItem('my_fridge_shelves')) || [
-            'Верхняя', 'Средняя', 'Нижняя', 'Дверца'
+        // Новая двухуровневая структура полок: Группа -> Список полок внутри нее
+        let groups = JSON.parse(localStorage.getItem('my_fridge_groups')) || [
+            {
+                id: 'g1',
+                name: 'Холодильное отделение',
+                shelves: ['Верхняя полка', 'Средняя полка', 'Нижняя полка']
+            },
+            {
+                id: 'g2',
+                name: 'Зона двери',
+                shelves: ['Верхний карман', 'Нижний карман']
+            },
+            {
+                id: 'g3',
+                name: 'Морозильная камера',
+                shelves: ['Верхний ящик', 'Нижний ящик']
+            }
         ];
 
         let products = JSON.parse(localStorage.getItem('my_fridge_items')) || [
-            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
-            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
-            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя', daysLeft: 1 },
-            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя', daysLeft: 12 },
-            { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
+            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя полка', daysLeft: 3 },
+            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя полка', daysLeft: 7 },
+            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя полка', daysLeft: 1 },
+            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя полка', daysLeft: 12 },
+            { id: 5, name: 'Соус', qty: 1, shelf: 'Верхний карман', daysLeft: 30 }
         ];
 
         let currentScreen = 'fridge';
@@ -426,20 +441,34 @@
             else if (currentMode === 'alpha') { displayItems.sort((a, b) => a.name.localeCompare(b.name)); }
 
             if (currentMode === 'classic') {
-                // Динамически обходим только те полки, которые создал пользователь
-                shelves.forEach(shelfName => {
-                    const shelfItems = displayItems.filter(item => item.shelf === shelfName);
-                    const shelfDiv = document.createElement('div');
-                    shelfDiv.className = 'shelf-section';
-                    shelfDiv.innerHTML = `
-                        <h4 class="shelf-title">${shelfName}</h4>
-                        <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
-                            ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
-                        </div>
-                    `;
-                    const shelfList = shelfDiv.querySelector('.shelf-border');
-                    shelfItems.forEach(item => { shelfList.appendChild(createProductCard(item)); });
-                    container.appendChild(shelfDiv);
+                // Идём по группам (зонам)
+                groups.forEach(group => {
+                    const groupDiv = document.createElement('div');
+                    groupDiv.style.marginBottom = '2rem';
+                    groupDiv.style.backgroundColor = '#f8fafc';
+                    groupDiv.style.borderRadius = '1rem';
+                    groupDiv.style.padding = '1rem';
+                    groupDiv.style.border = '1px solid #e2e8f0';
+                    
+                    groupDiv.innerHTML = `<h3 style="font-size: 0.95rem; font-weight: 800; color: #4f46e5; margin-top: 0; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">${group.name}</h3>`;
+                    
+                    // Внутри группы идём по её полкам
+                    group.shelves.forEach(shelfName => {
+                        const shelfItems = displayItems.filter(item => item.shelf === shelfName);
+                        const shelfDiv = document.createElement('div');
+                        shelfDiv.className = 'shelf-section';
+                        shelfDiv.innerHTML = `
+                            <h4 class="shelf-title" style="color: #64748b; font-size: 0.75rem;">${shelfName}</h4>
+                            <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
+                                \${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
+                            </div>
+                        `;
+                        const shelfList = shelfDiv.querySelector('.shelf-border');
+                        shelfItems.forEach(item => { shelfList.appendChild(createProductCard(item)); });
+                        groupDiv.appendChild(shelfDiv);
+                    });
+                    
+                    container.appendChild(groupDiv);
                 });
             } else {
                 const listDiv = document.createElement('div');
@@ -580,7 +609,7 @@
 
         function openModal() { 
             document.getElementById('addProductModal').classList.remove('hidden'); 
-            selectShelfRadio('Верхняя');
+            selectShelfRadio('Верхняя полка');
             setTimeout(() => {
                 const input = document.getElementById('prodName');
                 if (input) {
@@ -803,32 +832,24 @@
 
         // ГЛОБАЛЬНЫЙ ОБРАБОТЧИК КЛАВИАТУРЫ (Escape и Enter)
         document.addEventListener('keydown', function(event) {
-            // Закрытие окон по клавише Escape
             if (event.key === 'Escape') {
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
                 const settingsModal = document.getElementById('settingsShelfModal');
                 
-                if (addModal && !addModal.classList.contains('hidden')) {
-                    closeModal();
-                }
-                if (detailsModal && !detailsModal.classList.contains('hidden')) {
-                    closeProductDetailsModal();
-                }
+                if (addModal && !addModal.classList.contains('hidden')) closeModal();
+                if (detailsModal && !detailsModal.classList.contains('hidden')) closeProductDetailsModal();
                 if (settingsModal && !settingsModal.classList.contains('hidden')) closeSettingsModal();
             }
             
-            // Сохранение по клавише Enter
             if (event.key === 'Enter') {
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
                 
-                // Если открыто окно добавления — сохраняем новый продукт
                 if (addModal && !addModal.classList.contains('hidden')) {
-                    event.preventDefault(); // Защита от перезагрузки страницы
+                    event.preventDefault();
                     addProduct();
                 }
-                // Если открыто окно редактирования — сохраняем изменения текущего
                 if (detailsModal && !detailsModal.classList.contains('hidden')) {
                     event.preventDefault();
                     saveProductDetails();
@@ -836,7 +857,6 @@
             }
         });
 
-        // КЛИК ВОВНЕ: Закрытие по нажатию на темный фон-вуаль
         window.addEventListener('click', function(event) {
             const addModal = document.getElementById('addProductModal');
             const detailsModal = document.getElementById('productDetailsModal');
@@ -853,52 +873,69 @@
             if (!container) return;
             container.innerHTML = '';
 
-            shelves.forEach(shelfName => {
-                const btn = document.createElement('button');
-                btn.id = `${prefix}-${shelfName}`;
-                btn.onclick = () => window[onClickFnName](shelfName);
-                
-                // Базовые стили для всех радио-плашек
-                btn.style.flex = '1';
-                btn.style.minWidth = '45%';
-                btn.style.padding = '0.5rem 0.75rem';
-                btn.style.fontSize = '0.85rem';
-                btn.style.fontWeight = '500';
-                btn.style.borderRadius = '0.5rem';
-                btn.style.border = '1px solid #e2e8f0';
-                btn.style.cursor = 'pointer';
-                btn.style.transition = 'all 0.15s';
-                btn.style.display = 'flex';
-                btn.style.alignItems = 'center';
-                btn.style.gap = '0.5rem';
-                btn.style.backgroundColor = '#ffffff';
-                btn.style.color = '#475569';
+            // Бежим по всем группам (зонам)
+            groups.forEach(group => {
+                // Для каждой группы создаем маленький визуальный подзаголовок зоны прямо в поп-апе
+                const groupLabel = document.createElement('div');
+                groupLabel.textContent = group.name;
+                groupLabel.style.width = '100%';
+                groupLabel.style.fontSize = '0.7rem';
+                groupLabel.style.fontWeight = '700';
+                groupLabel.style.color = '#94a3b8';
+                groupLabel.style.textTransform = 'uppercase';
+                groupLabel.style.letterSpacing = '0.05em';
+                groupLabel.style.marginTop = '0.4rem';
+                groupLabel.style.marginBottom = '0.1rem';
+                container.appendChild(groupLabel);
 
-                // Если полка АКТИВНА (ВЫБРАНА)
-                if (shelfName === activeValue) {
-                    btn.style.borderColor = '#4f46e5';
-                    btn.style.backgroundColor = '#f8fafc';
+                // Бежим по полкам внутри этой группы
+                group.shelves.forEach(shelfName => {
+                    const btn = document.createElement('button');
+                    btn.id = `${prefix}-${shelfName}`;
+                    btn.onclick = () => window[onClickFnName](shelfName);
                     
-                    // Добавляем красивую синюю галочку в кружочке слева от текста
-                    btn.innerHTML = `
-                        <div style="width: 1rem; height: 1rem; border-radius: 9999px; background-color: #4f46e5; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
-                            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
-                                <polyline points="20 6 9 17 4 12"></polyline>
-                            </svg>
-                        </div>
-                        <span style="text-align: left;">${shelfName}</span>
-                    `;
-                } else {
-                    // Если полка НЕ активна
-                    btn.style.borderColor = '#e2e8f0';
-                    
-                    // Рисуем пустой серый кружочек слева от текста
-                    btn.innerHTML = `
-                        <div style="width: 1rem; height: 1rem; border-radius: 9999px; border: 2px solid #cbd5e1; box-sizing: border-box; flex-shrink: 0;"></div>
-                        <span style="text-align: left;">${shelfName}</span>
-                    `;
-                }
-                container.appendChild(btn);
+                    // Базовые стили для всех радио-плашек
+                    btn.style.flex = '1';
+                    btn.style.minWidth = '45%';
+                    btn.style.padding = '0.45rem 0.6rem';
+                    btn.style.fontSize = '0.8rem';
+                    btn.style.fontWeight = '500';
+                    btn.style.borderRadius = '0.5rem';
+                    btn.style.border = '1px solid #e2e8f0';
+                    btn.style.cursor = 'pointer';
+                    btn.style.transition = 'all 0.15s';
+                    btn.style.display = 'flex';
+                    btn.style.alignItems = 'center';
+                    btn.style.gap = '0.4rem';
+                    btn.style.backgroundColor = '#ffffff';
+                    btn.style.color = '#475569';
+
+                    // Если полка АКТИВНА (ВЫБРАНА)
+                    if (shelfName === activeValue) {
+                        btn.style.borderColor = '#4f46e5';
+                        btn.style.backgroundColor = '#f8fafc';
+                        
+                        // Добавляем красивую синюю галочку в кружочке слева от текста
+                        btn.innerHTML = `
+                            <div style="width: 0.9rem; height: 0.9rem; border-radius: 9999px; background-color: #4f46e5; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                                <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="20 6 9 17 4 12"></polyline>
+                                </svg>
+                            </div>
+                            <span style="text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shelfName}</span>
+                        `;
+                    } else {
+                        // Если полка НЕ активна
+                        btn.style.borderColor = '#e2e8f0';
+                        
+                        // Рисуем пустой серый кружочек слева от текста
+                        btn.innerHTML = `
+                            <div style="width: 0.9rem; height: 0.9rem; border-radius: 9999px; border: 2px solid #cbd5e1; box-sizing: border-box; flex-shrink: 0;"></div>
+                            <span style="text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${shelfName}</span>
+                        `;
+                    }
+                    container.appendChild(btn);
+                });
             });
         }
 
@@ -976,83 +1013,227 @@
             document.getElementById('settingsShelfModal').classList.add('hidden');
         }
 
+        function openSettingsModal() {
+            document.getElementById('settingsShelfModal').classList.remove('hidden');
+            renderSettingsModalList();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsShelfModal').classList.add('hidden');
+        }
+
         function renderSettingsModalList() {
             const listContainer = document.getElementById('settingsModalListContainer');
             if (!listContainer) return;
             listContainer.innerHTML = '';
 
-            shelves.forEach((shelfName, index) => {
-                const item = document.createElement('div');
-                item.style.display = 'flex';
-                item.style.alignItems = 'center';
-                item.style.justifyContent = 'space-between';
-                item.style.backgroundColor = '#f8fafc';
-                item.style.border = '1px solid #e2e8f0';
-                item.style.padding = '0.5rem 0.75rem';
-                item.style.borderRadius = '0.5rem';
-                item.style.gap = '0.5rem';
+            const btnAddGroup = document.createElement('button');
+            btnAddGroup.textContent = '+ Создать новую зону (группу)';
+            btnAddGroup.style.width = '100%';
+            btnAddGroup.style.padding = '0.5rem';
+            btnAddGroup.style.backgroundColor = '#10b981';
+            btnAddGroup.style.color = 'white';
+            btnAddGroup.style.border = 'none';
+            btnAddGroup.style.borderRadius = '0.5rem';
+            btnAddGroup.style.fontSize = '0.8rem';
+            btnAddGroup.style.fontWeight = '600';
+            btnAddGroup.style.cursor = 'pointer';
+            btnAddGroup.style.marginBottom = '1rem';
+            btnAddGroup.onclick = addNewGroup;
+            listContainer.appendChild(btnAddGroup);
 
-                item.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-grow: 1;">
-                        <button onclick="moveShelf(${index}, -1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === 0 ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
-                        <button onclick="moveShelf(${index}, 1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === shelves.length - 1 ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
-                        <input type="text" value="${shelfName}" onchange="renameShelf(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem; font-size: 0.85rem; border-radius: 0.375rem; flex-grow: 1; background: white; font-weight: 500; min-width: 0;">
+            groups.forEach((group, gIndex) => {
+                const groupBlock = document.createElement('div');
+                groupBlock.style.backgroundColor = '#f1f5f9';
+                groupBlock.style.border = '1px solid #cbd5e1';
+                groupBlock.style.borderRadius = '0.75rem';
+                groupBlock.style.padding = '0.75rem';
+                groupBlock.style.marginBottom = '1rem';
+                groupBlock.style.display = 'flex';
+                groupBlock.style.flexDirection = 'column';
+                groupBlock.style.gap = '0.5rem';
+
+                const groupHeader = document.createElement('div');
+                groupHeader.style.display = 'flex';
+                groupHeader.style.alignItems = 'center';
+                groupHeader.style.justifyContent = 'space-between';
+                groupHeader.style.gap = '0.4rem';
+                groupHeader.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.25rem; flex-grow: 1;">
+                        <button onclick="moveGroup(${gIndex}, -1)" style="background:none; border:none; font-size:1rem; cursor:pointer; color:#4f46e5;" ${gIndex === 0 ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
+                        <button onclick="moveGroup(${gIndex}, 1)" style="background:none; border:none; font-size:1rem; cursor:pointer; color:#4f46e5;" ${gIndex === groups.length - 1 ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
+                        <input type="text" value="${group.name}" onchange="renameGroup(${gIndex}, this.value)" style="border: 1px solid #94a3b8; padding: 0.35rem; font-size: 0.85rem; font-weight: 700; border-radius: 0.375rem; flex-grow: 1; background: #ffffff; color: #4f46e5; min-width: 0;">
                     </div>
-                    <button onclick="deleteShelf(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить полку">✕</button>
+                    <button onclick="deleteGroup(${gIndex})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem;" title="Удалить зону полностью">✕</button>
                 `;
-                listContainer.appendChild(item);
+                groupBlock.appendChild(groupHeader);
+
+                const shelvesContainer = document.createElement('div');
+                shelvesContainer.style.display = 'flex';
+                shelvesContainer.style.flexDirection = 'column';
+                shelvesContainer.style.gap = '0.4rem';
+                shelvesContainer.style.paddingLeft = '0.5rem';
+                shelvesContainer.style.borderLeft = '2px dashed #cbd5e1';
+
+                group.shelves.forEach((shelfName, sIndex) => {
+                    const shelfItem = document.createElement('div');
+                    shelfItem.style.display = 'flex';
+                    shelfItem.style.alignItems = 'center';
+                    shelfItem.style.justifyContent = 'space-between';
+                    shelfItem.style.backgroundColor = '#ffffff';
+                    shelfItem.style.border = '1px solid #e2e8f0';
+                    shelfItem.style.padding = '0.35rem 0.5rem';
+                    shelfItem.style.borderRadius = '0.5rem';
+                    shelfItem.style.gap = '0.4rem';
+
+                    shelfItem.innerHTML = `
+                        <div style="display: flex; align-items: center; gap: 0.2 presidential; flex-grow: 1;">
+                            <button onclick="moveShelf(${gIndex}, ${sIndex}, -1)" style="background:none; border:none; font-size:0.85rem; cursor:pointer; color:#64748b;" ${sIndex === 0 ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
+                            <button onclick="moveShelf(${gIndex}, ${sIndex}, 1)" style="background:none; border:none; font-size:0.85rem; cursor:pointer; color:#64748b;" ${sIndex === group.shelves.length - 1 ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
+                            <input type="text" value="${shelfName}" onchange="renameShelf(${gIndex}, ${sIndex}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.25rem; font-size: 0.8rem; border-radius: 0.25rem; flex-grow: 1; background: white; font-weight: 500; min-width: 0;">
+                        </div>
+                        <button onclick="deleteShelf(${gIndex}, ${sIndex})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 0.95rem; padding: 0.1rem 0.3rem;" title="Удалить полку">✕</button>
+                    `;
+                    shelvesContainer.appendChild(shelfItem);
+                });
+
+                groupBlock.appendChild(shelvesContainer);
+
+                const btnAddShelf = document.createElement('button');
+                btnAddShelf.textContent = '+ Добавить полку в эту зону';
+                btnAddShelf.style.width = '100%';
+                btnAddShelf.style.padding = '0.35rem';
+                btnAddShelf.style.backgroundColor = 'transparent';
+                btnAddShelf.style.color = '#4f46e5';
+                btnAddShelf.style.border = '1px dashed #4f46e5';
+                btnAddShelf.style.borderRadius = '0.5rem';
+                btnAddShelf.style.fontSize = '0.75rem';
+                btnAddShelf.style.fontWeight = '600';
+                btnAddShelf.style.cursor = 'pointer';
+                btnAddShelf.style.marginTop = '0.25rem';
+                btnAddShelf.onclick = () => addNewShelf(gIndex);
+                groupBlock.appendChild(btnAddShelf);
+
+                listContainer.appendChild(groupBlock);
             });
         }
 
-        // Обновим функции добавления, удаления и сортировки, чтобы они сразу перерисовывали список в поп-апе
-        function addNewShelf() {
-            shelves.push('Новая полка ' + (shelves.length + 1));
-            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+        function addNewGroup() {
+            const newId = 'g_' + Date.now();
+            groups.push({
+                id: newId,
+                name: 'Новая зона ' + (groups.length + 1),
+                shelves: ['Новая полка 1']
+            });
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
             renderSettingsModalList();
             render();
         }
 
-        function renameShelf(index, oldName) {
-            let newName = oldName.trim();
-            if (!newName) return renderSettingsModalList();
-            const currentOldName = shelves[index];
-            
-            products.forEach(p => { if (p.shelf === currentOldName) p.shelf = newName; });
-            shelves[index] = newName;
-            
-            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
-            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+        function renameGroup(gIndex, newName) {
+            const cleanName = newName.trim();
+            if (!cleanName) return renderSettingsModalList();
+            groups[gIndex].name = cleanName;
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
             renderSettingsModalList();
             render();
         }
 
-        function deleteShelf(index) {
-            const shelfName = shelves[index];
-            const hasProducts = products.some(p => p.shelf === shelfName);
+        function deleteGroup(gIndex) {
+            const group = groups[gIndex];
+            const affectedShelves = group.shelves;
+            const hasProducts = products.some(p => affectedShelves.includes(p.shelf));
+            
             if (hasProducts) {
-                if (!confirm(`На полке "${shelfName}" есть продукты. При удалении они автоматически перенесутся на первую доступную полку. Продолжить?`)) return;
+                if (!confirm(`В зоне "${group.name}" есть полки с продуктами. При удалении зоны все её продукты будут автоматически перенесены на первую доступную полку в других зонах. Продолжить?`)) return;
             }
-            
-            shelves.splice(index, 1);
-            if (shelves.length === 0) shelves.push('Основная полка');
 
-            products.forEach(p => { if (p.shelf === shelfName) p.shelf = shelves[0]; });
+            groups.splice(gIndex, 1);
+            if (groups.length === 0) {
+                groups.push({ id: 'g_main', name: 'Основное отделение', shelves: ['Основная полка'] });
+            }
 
-            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            const fallbackShelf = groups[0].shelves[0];
+            products.forEach(p => {
+                if (affectedShelves.includes(p.shelf)) p.shelf = fallbackShelf;
+            });
+
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
             renderSettingsModalList();
             render();
         }
 
-        function moveShelf(index, direction) {
-            const targetIndex = index + direction;
-            if (targetIndex < 0 || targetIndex >= shelves.length) return;
+        function moveGroup(gIndex, direction) {
+            const targetIndex = gIndex + direction;
+            if (targetIndex < 0 || targetIndex >= groups.length) return;
+            const temp = groups[gIndex];
+            groups[gIndex] = groups[targetIndex];
+            groups[targetIndex] = temp;
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
+            renderSettingsModalList();
+            render();
+        }
+
+        function addNewShelf(gIndex) {
+            const group = groups[gIndex];
+            group.shelves.push('Новая полка ' + (group.shelves.length + 1));
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
+            renderSettingsModalList();
+            render();
+        }
+
+        function renameShelf(gIndex, sIndex, newName) {
+            const cleanName = newName.trim();
+            if (!cleanName) return renderSettingsModalList();
             
-            const temp = shelves[index];
-            shelves[index] = shelves[targetIndex];
-            shelves[targetIndex] = temp;
+            const oldShelfName = groups[gIndex].shelves[sIndex];
+            products.forEach(p => {
+                if (p.shelf === oldShelfName) p.shelf = cleanName;
+            });
+
+            groups[gIndex].shelves[sIndex] = cleanName;
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            renderSettingsModalList();
+            render();
+        }
+
+        function deleteShelf(gIndex, sIndex) {
+            const shelfName = groups[gIndex].shelves[sIndex];
+            const hasProducts = products.some(p => p.shelf === shelfName);
             
-            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            if (hasProducts) {
+                if (!confirm(`На полке "${shelfName}" есть продукты. При удалении полки они автоматически перенесутся на первую доступную полку. Продолжить?`)) return;
+            }
+
+            groups[gIndex].shelves.splice(sIndex, 1);
+            
+            if (groups[gIndex].shelves.length === 0) {
+                groups[gIndex].shelves.push('Основная полка группы');
+            }
+
+            const fallbackShelf = groups[0].shelves[0];
+            products.forEach(p => {
+                if (p.shelf === shelfName) p.shelf = fallbackShelf;
+            });
+
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            renderSettingsModalList();
+            render();
+        }
+
+        function moveShelf(gIndex, sIndex, direction) {
+            const targetIndex = sIndex + direction;
+            const group = groups[gIndex];
+            if (targetIndex < 0 || targetIndex >= group.shelves.length) return;
+            
+            const temp = group.shelves[sIndex];
+            group.shelves[sIndex] = group.shelves[targetIndex];
+            group.shelves[targetIndex] = temp;
+
+            localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
             renderSettingsModalList();
             render();
         }
