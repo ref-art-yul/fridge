@@ -721,6 +721,54 @@
             render();
         }
 
+        // ГЛОБАЛЬНЫЙ ОБРАБОТЧИК КЛАВИАТУРЫ (Escape и Enter)
+        document.addEventListener('keydown', function(event) {
+            // Закрытие окон по клавише Escape
+            if (event.key === 'Escape') {
+                const addModal = document.getElementById('addProductModal');
+                const detailsModal = document.getElementById('productDetailsModal');
+                
+                if (addModal && !addModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+                if (detailsModal && !detailsModal.classList.contains('hidden')) {
+                    closeProductDetailsModal();
+                }
+            }
+            
+            // Сохранение по клавише Enter
+            if (event.key === 'Enter') {
+                const addModal = document.getElementById('addProductModal');
+                const detailsModal = document.getElementById('productDetailsModal');
+                
+                // Если открыто окно добавления — сохраняем новый продукт
+                if (addModal && !addModal.classList.contains('hidden')) {
+                    event.preventDefault(); // Защита от перезагрузки страницы
+                    addProduct();
+                }
+                // Если открыто окно редактирования — сохраняем изменения текущего
+                if (detailsModal && !detailsModal.classList.contains('hidden')) {
+                    event.preventDefault();
+                    saveProductDetails();
+                }
+            }
+        });
+
+        // КЛИК ВОВНЕ: Закрытие по нажатию на темный фон-вуаль
+        window.addEventListener('click', function(event) {
+            const addModal = document.getElementById('addProductModal');
+            const detailsModal = document.getElementById('productDetailsModal');
+            
+            // Если кликнули точно по темному фону добавления, а не по белому окну внутри
+            if (event.target === addModal) {
+                closeModal();
+            }
+            // Если кликнули точно по темному фону редактирования
+            if (event.target === detailsModal) {
+                closeProductDetailsModal();
+            }
+        });
+        
         render();
     </script>
 </body>
