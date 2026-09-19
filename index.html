@@ -144,6 +144,56 @@
             </button>
         </footer>
 
+        <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ И РЕДАКТИРОВАНИЯ ПРОДУКТА -->
+        <div id="productDetailsModal" class="modal-overlay hidden">
+            <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin: 0; color: #0f172a;">Карточка продукта</h3>
+                    <span id="detailsEmoji" style="font-size: 1.5rem;"></span>
+                </div>
+                
+                <!-- Переименование -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название</label>
+                    <input type="text" id="detailsName" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                </div>
+                
+                <!-- Изменение Полки внутри карточки -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Полка в холодильнике</label>
+                    <div style="display: flex; flex-wrap: wrap; gap: 0.4rem; width: 100%;">
+                        <button onclick="changeDetailsShelf('Верхняя')" id="detRadio-Верхняя" style="flex: 1; min-width: 45%; padding: 0.4rem; font-size: 0.8rem; font-weight: 500; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.15s;">Верхняя</button>
+                        <button onclick="changeDetailsShelf('Средняя')" id="detRadio-Средняя" style="flex: 1; min-width: 45%; padding: 0.4rem; font-size: 0.8rem; font-weight: 500; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.15s;">Средняя</button>
+                        <button onclick="changeDetailsShelf('Нижняя')" id="detRadio-Нижняя" style="flex: 1; min-width: 45%; padding: 0.4rem; font-size: 0.8rem; font-weight: 500; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.15s;">Нижняя</button>
+                        <button onclick="changeDetailsShelf('Дверца')" id="detRadio-Дверца" style="flex: 1; min-width: 45%; padding: 0.4rem; font-size: 0.8rem; font-weight: 500; border-radius: 0.5rem; border: 1px solid #e2e8f0; background: #ffffff; color: #475569; cursor: pointer; transition: all 0.15s;">Дверца</button>
+                    </div>
+                </div>
+                
+                <!-- Количество и Срок годности бок о бок -->
+                <div style="display: flex !important; flex-direction: row !important; gap: 0.75rem !important; width: 100% !important;">
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Количество</label>
+                        <input type="number" id="detailsQty" min="1" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
+                        <label class="form-label" style="font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок (дней)</label>
+                        <input type="number" id="detailsDays" min="0" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                    </div>
+                </div>
+                
+                <!-- Кнопки управления (Сохранить, Удалить 1 шт, Удалить всё, Отмена) -->
+                <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; width: 100%;">
+                    <button onclick="saveProductDetails()" class="btn-submit" style="width: 100%; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Сохранить изменения</button>
+                    
+                    <div style="display: flex; gap: 0.5rem; width: 100%;">
+                        <button id="btnDeleteOnePiece" onclick="deleteOnePieceFromDetails()" style="flex: 1; padding: 0.625rem 0; background-color: #f59e0b; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem; display: none;">Удалить 1 шт.</button>
+                        <button onclick="deleteAllProductFromDetails()" style="flex: 1; padding: 0.625rem 0; background-color: #ef4444; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Удалить всё</button>
+                        <button onclick="closeProductDetailsModal()" class="btn-cancel" style="flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Отмена</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ -->
         <div id="addProductModal" class="modal-overlay hidden">
             <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 1rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
@@ -342,17 +392,17 @@
             const isExpiring = item.daysLeft <= 1;
             card.className = `product-card ${isExpiring ? 'product-expiring' : ''}`;
             
-            // Включаем встроенный drag-and-drop браузера
+            // Сохраняем встроенный drag-and-drop
             card.draggable = true;
             card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.id); };
 
-            card.onclick = () => removeProduct(item.id);
+            // КЛИК ТЕПЕРЬ ОТКРЫВАЕТ ДЕТАЛЬНУЮ КАРТОЧКУ
+            card.onclick = () => openProductDetailsModal(item.id);
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 && isGrouped ? `<span class="product-badge">${item.qty}</span>` : ''}
+                ${item.qty > 1 && isGrouped ? `<span class="product-badge">\${item.qty}</span>` : ''}
                 <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
-                <div class="trash-overlay"><span style="color: #ef4444; font-weight: bold;">✕</span></div>
             `;
             return card;
         }
@@ -584,6 +634,111 @@
             }
 
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        let activeEditingProductId = null;
+        let detailsSelectedShelf = 'Верхняя';
+
+        function openProductDetailsModal(id) {
+            const product = products.find(p => p.id === id);
+            if (!product) return;
+
+            activeEditingProductId = id;
+            
+            // Заполняем поля текущими значениями продукта
+            document.getElementById('detailsEmoji').textContent = getEmoji(product.name);
+            document.getElementById('detailsName').value = product.name;
+            document.getElementById('detailsQty').value = product.qty;
+            document.getElementById('detailsDays').value = product.daysLeft;
+            
+            // Включаем подсветку текущей полки товара
+            changeDetailsShelf(product.shelf);
+
+            // Если товара больше чем 1 штука, показываем кнопку "Удалить 1 шт."
+            const btnOne = document.getElementById('btnDeleteOnePiece');
+            if (btnOne) {
+                btnOne.style.display = product.qty > 1 ? 'block' : 'none';
+            }
+
+            document.getElementById('productDetailsModal').classList.remove('hidden');
+        }
+
+        function closeProductDetailsModal() {
+            document.getElementById('productDetailsModal').classList.add('hidden');
+            activeEditingProductId = null;
+        }
+
+        function changeDetailsShelf(shelfName) {
+            detailsSelectedShelf = shelfName;
+            ['Верхняя', 'Средняя', 'Нижняя', 'Дверца'].forEach(name => {
+                const btn = document.getElementById(`detRadio-${name}`);
+                if (btn) {
+                    btn.style.background = '#ffffff';
+                    btn.style.color = '#475569';
+                    btn.style.borderColor = '#e2e8f0';
+                }
+            });
+            const activeBtn = document.getElementById(`detRadio-${shelfName}`);
+            if (activeBtn) {
+                activeBtn.style.background = '#4f46e5';
+                activeBtn.style.color = '#ffffff';
+                activeBtn.style.borderColor = '#4f46e5';
+            }
+        }
+
+        function saveProductDetails() {
+            if (activeEditingProductId === null) return;
+            const product = products.find(p => p.id === activeEditingProductId);
+            if (!product) return;
+
+            const nameInput = document.getElementById('detailsName').value.trim();
+            if (!nameInput) return alert('Название не может быть пустым!');
+
+            saveState();
+
+            // Автоматически делаем первую букву заглавной
+            product.name = nameInput.charAt(0).toUpperCase() + nameInput.slice(1);
+            product.qty = parseInt(document.getElementById('detailsQty').value) || 1;
+            product.daysLeft = parseInt(document.getElementById('detailsDays').value) || 0;
+            product.shelf = detailsSelectedShelf;
+
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            closeProductDetailsModal();
+            render();
+        }
+
+        function deleteOnePieceFromDetails() {
+            if (activeEditingProductId === null) return;
+            const product = products.find(p => p.id === activeEditingProductId);
+            if (!product) return;
+
+            saveState();
+
+            if (product.qty > 1) {
+                product.qty -= 1;
+                document.getElementById('detailsQty').value = product.qty;
+                // Если осталась 1 шт, прячем кнопку удаления поштучно
+                if (product.qty === 1) {
+                    document.getElementById('btnDeleteOnePiece').style.display = 'none';
+                }
+            } else {
+                products = products.filter(p => p.id !== activeEditingProductId);
+                closeProductDetailsModal();
+            }
+
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        function deleteAllProductFromDetails() {
+            if (activeEditingProductId === null) return;
+            
+            saveState();
+            products = products.filter(p => p.id !== activeEditingProductId);
+            
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            closeProductDetailsModal();
             render();
         }
 
