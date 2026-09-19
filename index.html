@@ -337,7 +337,15 @@
                 <span class="product-name">${item.name}</span>
                 ${item.qty > 1 && isGrouped ? `<span class="product-badge">${item.qty}</span>` : ''}
                 <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
-                <div class="trash-overlay"><span style="color: #ef4444; font-weight: bold;">✕</span></div>
+                <div class="trash-overlay" style="background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(1px);">
+                    <!-- Плотный красный кружок с белым толстым крестиком внутри -->
+                    <div style="background-color: #ef4444; width: 1.5rem; height: 1.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                            <line x1="18" y1="6" x2="6" y2="18"></line>
+                            <line x1="6" y1="6" x2="18" y2="18"></line>
+                        </svg>
+                    </div>
+                </div>
             `;
             return card;
         }
