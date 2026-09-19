@@ -1,6 +1,0 @@
-{
-  "loopProtection": true,
-  "esbuildDevelopment": {
-    "minify": false
-  }
-}
