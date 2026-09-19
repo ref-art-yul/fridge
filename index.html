@@ -150,9 +150,10 @@
                 <div class="form-group">
                     <label class="form-label">Название продукта</label>
                     <!-- Подключаем к инпуту умный список подсказок через атрибут list -->
-                    <input type="text" id="prodName" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" list="productsSuggestions" autocomplete="off">
+                    <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" autocomplete="off">
                     <!-- Сам контейнер для выпадающих подсказок -->
-                    <datalist id="productsSuggestions"></datalist>
+                    <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 0.5rem; margin-top: 0.25rem;"></div>
+                </div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -441,7 +442,46 @@
         }
 
         function openModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
-        function closeModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+        function showSuggestions(value) {
+            const container = document.getElementById('customSuggestions');
+            if (!container) return;
+            
+            // Если поле пустое, можем показать вообще все уникальные продукты из холодильника
+            const searchStr = value.toLowerCase().trim();
+            const uniqueNames = [...new Set(products.map(p => p.name))];
+            
+            // Фильтруем список без учета регистра букв
+            const filtered = uniqueNames.filter(name => name.toLowerCase().includes(searchStr));
+
+            if (filtered.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
+
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            filtered.forEach(name => {
+                const div = document.createElement('div');
+                div.textContent = name;
+                div.style.padding = '0.5rem 0.75rem';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '0.875rem';
+                div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
+                div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                
+                // При клике на подсказку подставляем текст в инпут и прячем меню
+                div.onclick = () => {
+                    document.getElementById('prodName').value = name;
+                    container.classList.add('hidden');
+                };
+                container.appendChild(div);
+            });
+        }
+        function closeModal() { 
+            document.getElementById('addProductModal').classList.add('hidden'); 
+            document.getElementById('customSuggestions').classList.add('hidden'); // Прячем подсказки
+        }
 
         function addProduct() {
             const nameInput = document.getElementById('prodName');
