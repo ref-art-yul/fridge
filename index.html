@@ -460,7 +460,7 @@
                         shelfDiv.innerHTML = `
                             <h4 class="shelf-title" style="color: #64748b; font-size: 0.75rem;">${shelfName}</h4>
                             <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
-                                \${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
+                                ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                             </div>
                         `;
                         const shelfList = shelfDiv.querySelector('.shelf-border');
