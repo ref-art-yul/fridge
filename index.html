@@ -4,16 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Умный Холодильник — Преврати хаос в порядок!</title>
-    
-    <!-- Подключаем стабильные скрипты React и Babel без использования сторонних доменов -->
-    <script src="https://esm.sh" crossorigin="anonymous"></script>
-    <script src="https://esm.sh" crossorigin="anonymous"></script>
-    <script src="https://esm.sh" crossorigin="anonymous"></script>
-    
-    <!-- Дизайн TailwindCSS и иконки, которые теперь запустятся без CORS-ошибок -->
+    <!-- Подключаем только дизайн Tailwind и иконки, они работают без ошибок -->
     <script src="https://tailwindcss.com"></script>
-    <script src="https://esm.sh" crossorigin="anonymous"></script>
-
+    <script src="https://cloudflare.com" crossorigin="anonymous"></script>
     <style>
         .shelf-border { border-bottom: 8px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .product-card { transition: all 0.2s ease; }
@@ -23,13 +16,99 @@
 </head>
 <body class="bg-slate-100 font-sans min-h-screen text-slate-800">
 
-    <!-- Сюда React смонтирует готовое приложение -->
-    <div id="root"></div>
+    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col justify-between relative pb-24">
+        
+        <!-- ШАПКА ПРИЛОЖЕНИЯ -->
+        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
+            <div class="flex justify-between items-center mb-3">
+                <h1 id="appTitle" class="text-xl font-bold flex items-center gap-2 text-indigo-600">
+                    <i data-lucide="refrigerator" class="w-6 h-6"></i> <span>Холодильник</span>
+                </h1>
+                <div class="flex gap-2">
+                    <button id="btnUndo" onclick="undo()" class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity" disabled>
+                        <i data-lucide="undo-2" class="w-5 h-5"></i>
+                    </button>
+                    <button id="btnRedo" onclick="redo()" class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity" disabled>
+                        <i data-lucide="redo-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div id="filterBar" class="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-none">
+                <button onclick="setMode('classic')" id="tab-classic" class="px-3 py-1.5 rounded-full bg-indigo-600 text-white font-medium whitespace-nowrap">Полки</button>
+                <button onclick="setMode('expiry')" id="tab-expiry" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">По сроку ⌛</button>
+                <button onclick="setMode('alpha')" id="tab-alpha" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">А-Я 🔤</button>
+                <button onclick="toggleGroup()" id="tab-group" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">Разгруппировать</button>
+            </div>
+        </header>
 
-    <!-- Запускаем код как чистый JSX скрипт без конфликтов с типами TypeScript -->
-    <script type="text/babel" data-presets="react">
-        const { useState, useEffect, useMemo, StrictMode } = React;
+        <!-- ОСНОВНОЙ КОНТЕНТ -->
+        <main class="flex-grow p-4 overflow-y-auto" id="mainContainer">
+            <!-- Сюда JS добавит полки или рецепты -->
+        </main>
 
+        <!-- КНОПКА ДОБАВЛЕНИЯ ПРОДУКТА -->
+        <div id="stickyAddBtn" class="absolute bottom-24 right-4 z-20">
+            <button onclick="openModal()" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105">
+                <i data-lucide="plus" class="w-8 h-8"></i>
+            </button>
+        </div>
+
+        <!-- НИЖНЕЕ МЕНЮ НАВИГАЦИИ -->
+        <footer class="bg-white border-t border-slate-200 p-3 grid grid-cols-3 text-center fixed bottom-0 w-full max-w-md shadow-lg z-10">
+            <button id="navFridge" onclick="switchScreen('fridge')" class="flex flex-col items-center text-indigo-600 font-semibold">
+                <i data-lucide="refrigerator" class="w-6 h-6"></i>
+                <span class="text-xs mt-1">Холодильник</span>
+            </button>
+            <button id="navRecipes" onclick="switchScreen('recipes')" class="flex flex-col items-center text-slate-400 hover:text-slate-600">
+                <i data-lucide="book-open" class="w-6 h-6"></i>
+                <span class="text-xs mt-1">Рецепты</span>
+            </button>
+            <button onclick="alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')" class="flex flex-col items-center text-slate-400 hover:text-slate-600">
+                <i data-lucide="users" class="w-6 h-6"></i>
+                <span class="text-xs mt-1">Семья</span>
+            </button>
+        </footer>
+
+        <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ -->
+        <div id="addProductModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                <h3 class="text-lg font-bold mb-4 text-slate-900">Добавить продукт</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Название продукта</label>
+                        <input type="text" id="prodName" placeholder="Например: Молоко, Сыр, Томаты" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Количество</label>
+                            <input type="number" id="prodQty" value="1" min="1" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Полка</label>
+                            <select id="prodShelf" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+                                <option value="Верхняя">Верхняя</option>
+                                <option value="Средняя">Средняя</option>
+                                <option value="Нижняя">Нижняя</option>
+                                <option value="Дверца">Дверца</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Срок годности (дней)</label>
+                        <input type="number" id="prodDays" value="5" min="0" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="flex gap-3 mt-6">
+                        <button onclick="closeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">Отмена</button>
+                        <button onclick="addProduct()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm">Добавить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <!-- СЦЕНАРИЙ ЛОГИКИ ПРИЛОЖЕНИЯ -->
+    <script>
         // --- Карта красивых картинок-эмодзи под продукты ---
         const emojiMap = {
             'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
@@ -46,17 +125,8 @@
             return '📦';
         };
 
-        // --- Исходные продукты по вашему проекту ---
-        const INITIAL_PRODUCTS = [
-            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
-            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
-            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя', daysLeft: 1 },
-            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя', daysLeft: 12 },
-            { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
-        ];
-
-        // --- Ваша новая Книга Рецептов ---
-        const RECIPES_DATABASE = [
+        // --- Встроенная База Рецептов ---
+        const recipesDatabase = [
             {
                 id: 101,
                 title: "Классический омлет",
@@ -65,7 +135,7 @@
             {
                 id: 102,
                 title: "Свежий салат",
-                ingredients: [{ name: "Томаты", qty: 2 }]
+                ingredients: [{ name: "Томаты", qty: 2 }, { name: "Огурец", qty: 1 }]
             },
             {
                 id: 103,
@@ -73,416 +143,261 @@
                 ingredients: [{ name: "Хлеб", qty: 1 }, { name: "Сыр", qty: 1 }]
             }
         ];
-        // --- Основной Компонент Приложения ---
-        function App() {
-            const [products, setProducts] = useState(() => {
-                const saved = localStorage.getItem('my_fridge_items');
-                return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
-            });
 
-            const [history, setHistory] = useState([]);
-            const [redoStack, setRedoStack] = useState([]);
-            const [screen, setScreen] = useState('fridge'); // 'fridge' или 'recipes'
-            const [mode, setMode] = useState('classic'); // 'classic', 'expiry', 'alpha'
-            const [isGrouped, setIsGrouped] = useState(true);
-            const [isModalOpen, setIsModalOpen] = useState(false);
+        // --- Переменные состояния ---
+        let products = JSON.parse(localStorage.getItem('my_fridge_items')) || [
+            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
+            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
+            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя', daysLeft: 1 },
+            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя', daysLeft: 12 },
+            { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
+        ];
 
-            // Состояния полей модального окна добавления
-            const [newName, setNewName] = useState('');
-            const [newQty, setNewQty] = useState(1);
-            const [newShelf, setNewShelf] = useState('Верхняя');
-            const [newDays, setNewDays] = useState(5);
+        let currentScreen = 'fridge'; // fridge, recipes
+        let currentMode = 'classic'; // classic, expiry, alpha
+        let isGrouped = true;
 
-            // Автоматическое сохранение в память браузера
-            useEffect(() => {
-                localStorage.setItem('my_fridge_items', JSON.stringify(products));
-            }, [products]);
+        let historyUndo = [];
+        let historyRedo = [];
 
-            // Обновление векторных иконок при перерисовках экрана
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            });
-
-            const saveState = () => {
-                setHistory(prev => [...prev.slice(-19), JSON.stringify(products)]);
-                setRedoStack([]);
-            };
-
-            const undo = () => {
-                if (history.length === 0) return;
-                const prevState = history[history.length - 1];
-                setRedoStack(prev => [...prev, JSON.stringify(products)]);
-                setProducts(JSON.parse(prevState));
-                setHistory(prev => prev.slice(0, -1));
-            };
-
-            const redo = () => {
-                if (redoStack.length === 0) return;
-                const nextState = redoStack[redoStack.length - 1];
-                setHistory(prev => [...prev, JSON.stringify(products)]);
-                setProducts(JSON.parse(nextState));
-                setRedoStack(prev => prev.slice(0, -1));
-            };
-
-            const addProduct = () => {
-                if (!newName.trim()) return alert('Пожалуйста, напишите название продукта!');
-                
-                saveState();
-                const existingIndex = products.findIndex(
-                    p => p.name.toLowerCase() === newName.toLowerCase() && p.shelf === newShelf
-                );
-
-                if (existingIndex > -1) {
-                    const updated = [...products];
-                    updated[existingIndex].qty += newQty;
-                    setProducts(updated);
-                } else {
-                    setProducts(prev => [...prev, {
-                        id: Date.now(),
-                        name: newName,
-                        qty: newQty,
-                        shelf: newShelf,
-                        daysLeft: newDays
-                    }]);
-                }
-
-                setNewName('');
-                setNewQty(1);
-                setNewDays(5);
-                setIsModalOpen(false);
-            };
-
-            const removeProduct = (id) => {
-                saveState();
-                setProducts(prev => {
-                    const index = prev.findIndex(p => p.id === id);
-                    if (index === -1) return prev;
-                    
-                    const updated = [...prev];
-                    if (updated[index].qty > 1) {
-                        updated[index].qty -= 1;
-                        return updated;
-                    } else {
-                        return updated.filter(p => p.id !== id);
-                    }
-                });
-            };
-
-            // Логика автоматического интерактивного списания продуктов
-            const cookRecipe = (recipe) => {
-                saveState();
-                let updatedProducts = [...products];
-
-                recipe.ingredients.forEach(ing => {
-                    let needed = ing.qty;
-                    for (let i = 0; i < updatedProducts.length; i++) {
-                        if (updatedProducts[i].name.toLowerCase().trim() === ing.name.toLowerCase().trim()) {
-                            if (updatedProducts[i].qty >= needed) {
-                                updatedProducts[i].qty -= needed;
-                                needed = 0;
-                            } else {
-                                needed -= updatedProducts[i].qty;
-                                updatedProducts[i].qty = 0;
-                            }
-                        }
-                        if (needed === 0) break;
-                    }
-                });
-
-                setProducts(updatedProducts.filter(p => p.qty > 0));
-                alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты автоматически списаны.`);
-            };
-
-            const displayItems = useMemo(() => {
-                let items = [];
-                if (isGrouped) {
-                    items = [...products];
-                } else {
-                    products.forEach(p => {
-                        for (let i = 0; i < p.qty; i++) {
-                            items.push({ ...p, qty: 1 });
-                        }
-                    });
-                }
-
-                if (mode === 'expiry') {
-                    items.sort((a, b) => a.daysLeft - b.daysLeft);
-                } else if (mode === 'alpha') {
-                    items.sort((a, b) => a.name.localeCompare(b.name));
-                }
-                return items;
-            }, [products, isGrouped, mode]);
-            return (
-                <div className="bg-slate-100 font-sans min-h-screen text-slate-800">
-                    <div className="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col relative pb-24">
-                        
-                        {/* ШАПКА ПРИЛОЖЕНИЯ */}
-                        <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-                            <div className="flex justify-between items-center mb-3">
-                                <h1 className="text-xl font-bold flex items-center gap-2 text-indigo-600">
-                                    <i data-lucide={screen === 'fridge' ? "refrigerator" : "book-open"} className="w-6 h-6"></i> 
-                                    {screen === 'fridge' ? 'Холодильник' : 'Книга рецептов'}
-                                </h1>
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={undo}
-                                        disabled={history.length === 0}
-                                        className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"
-                                    >
-                                        <i data-lucide="undo-2" className="w-5 h-5"></i>
-                                    </button>
-                                    <button 
-                                        onClick={redo}
-                                        disabled={redoStack.length === 0}
-                                        className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"
-                                    >
-                                        <i data-lucide="redo-2" className="w-5 h-5"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            {screen === 'fridge' && (
-                                <div className="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-none">
-                                    {['classic', 'expiry', 'alpha'].map(m => (
-                                        <button
-                                            key={m}
-                                            onClick={() => setMode(m)}
-                                            className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${mode === m ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
-                                        >
-                                            {m === 'classic' ? 'Полки' : m === 'expiry' ? 'По сроку ⌛' : 'А-Я 🔤'}
-                                        </button>
-                                    ))}
-                                    <button 
-                                        onClick={() => setIsGrouped(!isGrouped)}
-                                        className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${!isGrouped ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
-                                    >
-                                        {isGrouped ? 'Разгруппировать' : 'Сгруппировать'}
-                                    </button>
-                                </div>
-                            )}
-                        </header>
-                        {/* ОСНОВНОЙ ЭКРАН ХОЛОДИЛЬНИКА */}
-                        <main className="flex-grow p-4 overflow-y-auto">
-                            {screen === 'fridge' ? (
-                                mode === 'classic' ? (
-                                    ['Верхняя', 'Средняя', 'Нижняя', 'Дверца'].map(shelfName => {
-                                        const shelfItems = displayItems.filter(item => item.shelf === shelfName);
-                                        return (
-                                            <div key={shelfName} className="mb-6">
-                                                <h4 className="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wider">
-                                                    {shelfName} полка
-                                                </h4>
-                                                <div className="shelf-border min-h-[96px] bg-slate-50/60 rounded-t-xl p-3 flex flex-wrap gap-4 items-end">
-                                                    {shelfItems.length === 0 ? (
-                                                        <span className="text-xs text-slate-300 italic mx-auto my-auto py-4">Полка пуста</span>
-                                                    ) : (
-                                                        shelfItems.map(item => (
-                                                            <ProductCard 
-                                                                key={item.id} 
-                                                                item={item} 
-                                                                onClick={() => removeProduct(item.id)}
-                                                                isGrouped={isGrouped}
-                                                            />
-                                                        ))
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })
-                                ) : (
-                                    <div className="grid grid-cols-4 gap-4 p-2">
-                                        {displayItems.map(item => (
-                                            <ProductCard 
-                                                key={item.id} 
-                                                item={item} 
-                                                onClick={() => removeProduct(item.id)}
-                                                isGrouped={isGrouped}
-                                            />
-                                        ))}
-                                    </div>
-                                )
-                            ) : (
-                                /* ЭКРАН С КНИГОЙ РЕЦЕПТОВ */
-                                <div className="space-y-4">
-                                    {RECIPES_DATABASE.map(recipe => {
-                                        let canCook = true;
-                                        let missingIngredients = 0;
-
-                                        const ingStatus = recipe.ingredients.map(ing => {
-                                            const inFridge = products
-                                                .filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim())
-                                                .reduce((sum, p) => sum + p.qty, 0);
-                                            const hasEnough = inFridge >= ing.qty;
-                                            if (!hasEnough) { canCook = false; missingIngredients++; }
-                                            return { ...ing, available: inFridge, ok: hasEnough };
-                                        });
-
-                                        return (
-                                            <div key={recipe.id} className={`p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}`}>
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h3 className="font-bold text-slate-800">{recipe.title}</h3>
-                                                        <p className="text-[11px] text-slate-400">Ингредиентов: {recipe.ingredients.length}</p>
-                                                    </div>
-                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                        {canCook ? 'Можно готовить 🍳' : `Не хватает: ${missingIngredients}`}
-                                                    </span>
-                                                </div>
-                                                <div className="space-y-1 border-t border-slate-100 pt-2 mb-3">
-                                                    {ingStatus.map(ing => (
-                                                        <div key={ing.name} className="flex justify-between items-center text-xs">
-                                                            <span className={ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}>
-                                                                {getEmoji(ing.name)} {ing.name} ({ing.qty} шт.)
-                                                            </span>
-                                                            <span className={`text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}`}>
-                                                                {ing.ok ? 'В наличии ✓' : `Есть только ${ing.available}`}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                                {canCook && (
-                                                    <button onClick={() => cookRecipe(recipe)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">
-                                                        Приготовить и списать продукты
-                                                    </button>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )}
-                        </main>
-                        {/* FLOATING ADD BUTTON */}
-                        {screen === 'fridge' && (
-                            <div className="absolute bottom-24 right-4 z-20">
-                                <button 
-                                    onClick={() => setIsModalOpen(true)}
-                                    className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105"
-                                >
-                                    <i data-lucide="plus" className="w-8 h-8"></i>
-                                </button>
-                            </div>
-                        )}
-
-                        {/* NAV BAR */}
-                        <footer className="bg-white border-t border-slate-200 p-3 grid grid-cols-3 text-center fixed bottom-0 w-full max-w-md shadow-lg z-10">
-                            <button onClick={() => setScreen('fridge')} className={`flex flex-col items-center ${screen === 'fridge' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <i data-lucide="refrigerator" className="w-6 h-6"></i>
-                                <span className="text-xs mt-1">Холодильник</span>
-                            </button>
-                            <button onClick={() => setScreen('recipes')} className={`flex flex-col items-center ${screen === 'recipes' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}`}>
-                                <i data-lucide="book-open" className="w-6 h-6"></i>
-                                <span className="text-xs mt-1">Рецепты</span>
-                            </button>
-                            <button onClick={() => alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')} className="flex flex-col items-center text-slate-400 hover:text-slate-600">
-                                <i data-lucide="users" className="w-6 h-6"></i>
-                                <span className="text-xs mt-1">Семья</span>
-                            </button>
-                        </footer>
-
-                        {/* MODAL WINDOW */}
-                        {isModalOpen && (
-                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-                                <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-                                    <h3 className="text-lg font-bold mb-4 text-slate-900">Добавить продукт</h3>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Название продукта</label>
-                                            <input 
-                                                type="text" 
-                                                value={newName}
-                                                onChange={(e) => setNewName(e.target.value)}
-                                                placeholder="Например: Молоко, Сыр" 
-                                                className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Количество</label>
-                                                <input 
-                                                    type="number" 
-                                                    value={newQty}
-                                                    onChange={(e) => setNewQty(parseInt(e.target.value) || 1)}
-                                                    min="1" 
-                                                    className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
-                                                />
-                                            </div>
-                                            <div>
-                                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Полка</label>
-                                                <select 
-                                                    value={newShelf}
-                                                    onChange={(e) => setNewShelf(e.target.value)}
-                                                    className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
-                                                >
-                                                    <option value="Верхняя">Верхняя</option>
-                                                    <option value="Средняя">Средняя</option>
-                                                    <option value="Нижняя">Нижняя</option>
-                                                    <option value="Дверца">Дверца</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Срок годности (дней)</label>
-                                            <input 
-                                                type="number" 
-                                                value={newDays}
-                                                onChange={(e) => setNewDays(parseInt(e.target.value) || 0)}
-                                                min="0" 
-                                                className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
-                                            />
-                                        </div>
-                                        <div className="flex gap-3 mt-6">
-                                            <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">
-                                                Отмена
-                                            </button>
-                                            <button onClick={addProduct} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm">
-                                                Добавить
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-                </div>
-            );
+        function saveState() {
+            historyUndo.push(JSON.stringify(products));
+            if (historyUndo.length > 20) historyUndo.shift();
+            historyRedo = []; 
+            updateHistoryButtons();
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
         }
 
-        // --- Внутренний компонент карточки еды ---
-        function ProductCard({ item, onClick, isGrouped }) {
+        function undo() {
+            if (historyUndo.length === 0) return;
+            historyRedo.push(JSON.stringify(products));
+            products = JSON.parse(historyUndo.pop());
+            updateHistoryButtons();
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        function redo() {
+            if (historyRedo.length === 0) return;
+            historyUndo.push(JSON.stringify(products));
+            products = JSON.parse(historyRedo.pop());
+            updateHistoryButtons();
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        function updateHistoryButtons() {
+            document.getElementById('btnUndo').disabled = historyUndo.length === 0;
+            document.getElementById('btnRedo').disabled = historyRedo.length === 0;
+        }
+
+        function switchScreen(screen) {
+            const title = document.getElementById('appTitle');
+            const filterBar = document.getElementById('filterBar');
+            const addBtn = document.getElementById('stickyAddBtn');
+            const navFridge = document.getElementById('navFridge');
+            const navRecipes = document.getElementById('navRecipes');
+
+            currentScreen = screen;
+
+            if (screen === 'fridge') {
+                title.innerHTML = '<i data-lucide="refrigerator" class="w-6 h-6"></i> <span>Холодильник</span>';
+                filterBar.classList.remove('hidden');
+                addBtn.classList.remove('hidden');
+                navFridge.className = "flex flex-col items-center text-indigo-600 font-semibold";
+                navRecipes.className = "flex flex-col items-center text-slate-400 hover:text-slate-600";
+            } else {
+                title.innerHTML = '<i data-lucide="book-open" class="w-6 h-6"></i> <span>Книга рецептов</span>';
+                filterBar.classList.add('hidden');
+                addBtn.classList.add('hidden');
+                navFridge.className = "flex flex-col items-center text-slate-400 hover:text-slate-600";
+                navRecipes.className = "flex flex-col items-center text-indigo-600 font-semibold";
+            }
+            render();
+        }
+        function render() {
+            const container = document.getElementById('mainContainer');
+            if (!container) return;
+            container.innerHTML = '';
+
+            if (currentScreen === 'fridge') {
+                renderFridge(container);
+            } else {
+                renderRecipes(container);
+            }
+            if (window.lucide) window.lucide.createIcons();
+        }
+
+        function renderFridge(container) {
+            let displayItems = [];
+            if (isGrouped) {
+                displayItems = JSON.parse(JSON.stringify(products));
+            } else {
+                products.forEach(p => {
+                    for(let i = 0; i < p.qty; i++) {
+                        displayItems.push({...p, qty: 1});
+                    }
+                });
+            }
+
+            if (currentMode === 'expiry') {
+                displayItems.sort((a, b) => a.daysLeft - b.daysLeft);
+            } else if (currentMode === 'alpha') {
+                displayItems.sort((a, b) => a.name.localeCompare(b.name));
+            }
+
+            if (currentMode === 'classic') {
+                const shelves = ['Верхняя', 'Средняя', 'Нижняя', 'Дверца'];
+                shelves.forEach(shelfName => {
+                    const shelfItems = displayItems.filter(item => item.shelf === shelfName);
+                    const shelfDiv = document.createElement('div');
+                    shelfDiv.className = 'mb-6';
+                    shelfDiv.innerHTML = `
+                        <h4 class="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wider">${shelfName} полка</h4>
+                        <div class="shelf-border min-h-[96px] bg-slate-50/60 rounded-t-xl p-3 flex flex-wrap gap-4 items-end">
+                            ${shelfItems.length === 0 ? '<span class="text-xs text-slate-300 italic self-center mx-auto my-auto py-4">Полка пуста</span>' : ''}
+                        </div>
+                    `;
+                    const shelfList = shelfDiv.querySelector('.shelf-border');
+                    shelfItems.forEach(item => { shelfList.appendChild(createProductCard(item)); });
+                    container.appendChild(shelfDiv);
+                });
+            } else {
+                const listDiv = document.createElement('div');
+                listDiv.className = 'grid grid-cols-4 gap-4 p-2';
+                displayItems.forEach(item => { listDiv.appendChild(createProductCard(item)); });
+                container.appendChild(listDiv);
+            }
+        }
+
+        function createProductCard(item) {
+            const card = document.createElement('div');
             const isExpiring = item.daysLeft <= 1;
-            return (
-                <div 
-                    onClick={onClick}
-                    className={`product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}`}
-                >
-                    <span className="text-3xl mb-1 select-none">{getEmoji(item.name)}</span>
-                    <span className="text-[10px] text-center font-medium truncate w-full text-slate-700">{item.name}</span>
-                    {item.qty > 1 && isGrouped && (
-                        <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
-                            {item.qty}
-                        </span>
-                    )}
-                    <span className={`text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}`}>
-                        {item.daysLeft} дн.
-                    </span>
-                    <div className="absolute inset-0 bg-rose-500/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity flex items-center justify-center">
-                        <i data-lucide="trash-2" className="w-4 h-4 text-rose-600 opacity-60"></i>
-                    </div>
+            card.className = `product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}`;
+            card.onclick = () => removeProduct(item.id);
+            card.innerHTML = `
+                <span class="text-3xl mb-1 select-none">${getEmoji(item.name)}</span>
+                <span class="text-[10px] text-center font-medium truncate w-full text-slate-700">${item.name}</span>
+                ${item.qty > 1 && isGrouped ? `<span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">${item.qty}</span>` : ''}
+                <span class="text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}">${item.daysLeft} дн.</span>
+                <div class="absolute inset-0 bg-rose-500/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity flex items-center justify-center">
+                    <i data-lucide="trash-2" class="w-4 h-4 text-rose-600 opacity-60"></i>
                 </div>
-            );
+            `;
+            return card;
         }
 
-        // --- Монтирование приложения в DOM ---
-        const rootElement = document.getElementById('root');
-        if (rootElement) {
-            const root = ReactDOM.createRoot(rootElement);
-            root.render(
-                <StrictMode>
-                    <App />
-                </StrictMode>
-            );
+        function renderRecipes(container) {
+            const listDiv = document.createElement('div');
+            listDiv.className = 'space-y-4';
+
+            recipesDatabase.forEach(recipe => {
+                let canCook = true;
+                let missingIngredients = 0;
+                const ingStatus = recipe.ingredients.map(ing => {
+                    const inFridge = products.filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim()).reduce((sum, p) => sum + p.qty, 0);
+                    const hasEnough = inFridge >= ing.qty;
+                    if (!hasEnough) { canCook = false; missingIngredients++; }
+                    return { ...ing, available: inFridge, ok: hasEnough };
+                });
+
+                const card = document.createElement('div');
+                card.className = `p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}`;
+                let ingredientsHTML = ingStatus.map(ing => `
+                    <div class="flex justify-between items-center text-xs mt-1">
+                        <span class="${ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
+                        <span class="text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}">${ing.ok ? 'В наличии ✓' : `Есть только ${ing.available}`}</span>
+                    </div>
+                `).join('');
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <div>
+                            <h3 class="font-bold text-slate-800">${recipe.title}</h3>
+                            <p class="text-[11px] text-slate-400">Ингредиентов: ${recipe.ingredients.length}</p>
+                        </div>
+                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${canCook ? 'Можно готовить 🍳' : `Не хватает: ${missingIngredients}`}</span>
+                    </div>
+                    <div class="space-y-1 border-t border-slate-100 pt-2 mb-3">${ingredientsHTML}</div>
+                    ${canCook ? `<button onclick="event.stopPropagation(); cookRecipe(${recipe.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">Приготовить и списать продукты</button>` : ''}
+                `;
+                listDiv.appendChild(card);
+            });
+            container.appendChild(listDiv);
         }
-    </script>
-</body>
-</html>
+
+        function cookRecipe(recipeId) {
+            const recipe = recipesDatabase.find(r => r.id === recipeId);
+            if (!recipe) return;
+            saveState();
+
+            recipe.ingredients.forEach(ing => {
+                let needed = ing.qty;
+                for (let i = 0; i < products.length; i++) {
+                    if (products[i].name.toLowerCase().trim() === ing.name.toLowerCase().trim()) {
+                        if (products[i].qty >= needed) { products[i].qty -= needed; needed = 0; }
+                        else { needed -= products[i].qty; products[i].qty = 0; }
+                    }
+                    if (needed === 0) break;
+                }
+            });
+
+            products = products.filter(p => p.qty > 0);
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты автоматически списаны.`);
+            render();
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            ['classic', 'expiry', 'alpha'].forEach(m => {
+                const btn = document.getElementById(`tab-${m}`);
+                if(btn) btn.className = (m === mode) ? "px-3 py-1.5 rounded-full bg-indigo-600 text-white font-medium whitespace-nowrap" : "px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap";
+            });
+            render();
+        }
+
+        function toggleGroup() {
+            isGrouped = !isGrouped;
+            const btn = document.getElementById('tab-group');
+            if(btn) {
+                btn.textContent = isGrouped ? 'Разгруппировать' : 'Сгруппировать';
+                btn.className = isGrouped ? "px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap" : "px-3 py-1.5 rounded-full bg-amber-500 text-white font-medium whitespace-nowrap";
+            }
+            render();
+        }
+
+        function removeProduct(id) {
+            saveState();
+            const index = products.findIndex(p => p.id === id);
+            if (index !== -1) {
+                if (products[index].qty > 1) { products[index].qty -= 1; }
+                else { products.splice(index, 1); }
+            }
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        function openModal() { document.getElementById('addProductModal').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('addProductModal').classList.add('hidden'); }
+
+        function addProduct() {
+            const nameInput = document.getElementById('prodName');
+            const name = nameInput.value.trim();
+            const qty = parseInt(document.getElementById('prodQty').value) || 1;
+            const shelf = document.getElementById('prodShelf').value;
+            const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
+
+            if (!name) return alert('Пожалуйста, напишите название продукта!');
+            saveState();
+            
+            const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.shelf === shelf);
+            if (existing) { existing.qty += qty; }
+            else { products.push({ id: Date.now(), name, qty, shelf, daysLeft }); }
+
+            nameInput.value = '';
+            document.getElementById('prodQty').value = '1';
+            document.getElementById('prodDays').value = '5';
+            closeModal();localStorage.setItem('my_fridge_items', JSON.stringify(products));render();
+        }
+        render();
