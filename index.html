@@ -596,7 +596,14 @@
 
             if (!name) return alert('Напишите название продукта!');
             saveState();
-            const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.shelf === shelf);
+            
+            // ЧЁТКАЯ ПРАВКА: Ищем совпадение по имени, полке И сроку годности одновременно
+            const existing = products.find(p => 
+                p.name.toLowerCase() === name.toLowerCase() && 
+                p.shelf === shelf &&
+                p.daysLeft === daysLeft
+            );
+
             if (existing) { existing.qty += qty; } 
             else { products.push({ id: Date.now(), name, qty, shelf, daysLeft }); }
 
@@ -625,10 +632,11 @@
 
             saveState();
 
-            // Проверяем, есть ли уже такой же продукт на целевой полке
+            // ЧЁТКАЯ ПРАВКА: При перетаскивании объединяем только если совпадает имя И срок годности
             const targetProductIndex = products.findIndex(p => 
                 p.name.toLowerCase().trim() === draggedProduct.name.toLowerCase().trim() && 
-                p.shelf === targetShelf
+                p.shelf === targetShelf &&
+                p.daysLeft === draggedProduct.daysLeft
             );
 
             if (targetProductIndex !== -1) {
