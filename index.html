@@ -287,9 +287,10 @@
             if (isGrouped) {
                 displayItems = JSON.parse(JSON.stringify(products));
             } else {
-                products.forEach(p => {
-                    for(let i = 0; i < p.qty; i++) { displayItems.push({...p, qty: 1}); }
-                });
+                const listDiv = document.createElement('div');
+                listDiv.className = 'list-grid';
+                displayItems.forEach(item => { listDiv.appendChild(createProductCard(item)); });
+                container.appendChild(listDiv);
             }
 
             if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
