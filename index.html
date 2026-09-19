@@ -322,7 +322,7 @@
                     shelfDiv.innerHTML = `
                         <h4 class="shelf-title">${shelfName} полка</h4>
                         <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
-                            \${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
+                            ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                         </div>
                     `;
                     const shelfList = shelfDiv.querySelector('.shelf-border');
@@ -350,7 +350,7 @@
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 && isGrouped ? `<span class="product-badge">\${item.qty}</span>` : ''}
+                ${item.qty > 1 && isGrouped ? `<span class="product-badge">${item.qty}</span>` : ''}
                 <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
                 <div class="trash-overlay"><span style="color: #ef4444; font-weight: bold;">✕</span></div>
             `;
