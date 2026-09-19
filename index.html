@@ -185,9 +185,8 @@
                 <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; width: 100%;">
                     <button onclick="saveProductDetails()" class="btn-submit" style="width: 100%; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Сохранить изменения</button>
                     
-                    <div style="display: flex; gap: 0.5rem; width: 100%;">
-                        <button id="btnDeleteOnePiece" onclick="deleteOnePieceFromDetails()" style="flex: 1; padding: 0.625rem 0; background-color: #f59e0b; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem; display: none;">Удалить 1 шт.</button>
-                        <button onclick="deleteAllProductFromDetails()" style="flex: 1; padding: 0.625rem 0; background-color: #ef4444; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Удалить всё</button>
+                    <div style="display: flex; gap: 0.75rem; width: 100%;">
+                        <button onclick="deleteAllProductFromDetails()" style="flex: 1; padding: 0.625rem 0; background-color: #ef4444; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Удалить с полки</button>
                         <button onclick="closeProductDetailsModal()" class="btn-cancel" style="flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Отмена</button>
                     </div>
                 </div>
@@ -655,12 +654,6 @@
             // Включаем подсветку текущей полки товара
             changeDetailsShelf(product.shelf);
 
-            // Если товара больше чем 1 штука, показываем кнопку "Удалить 1 шт."
-            const btnOne = document.getElementById('btnDeleteOnePiece');
-            if (btnOne) {
-                btnOne.style.display = product.qty > 1 ? 'block' : 'none';
-            }
-
             document.getElementById('productDetailsModal').classList.remove('hidden');
         }
 
@@ -705,29 +698,6 @@
 
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
             closeProductDetailsModal();
-            render();
-        }
-
-        function deleteOnePieceFromDetails() {
-            if (activeEditingProductId === null) return;
-            const product = products.find(p => p.id === activeEditingProductId);
-            if (!product) return;
-
-            saveState();
-
-            if (product.qty > 1) {
-                product.qty -= 1;
-                document.getElementById('detailsQty').value = product.qty;
-                // Если осталась 1 шт, прячем кнопку удаления поштучно
-                if (product.qty === 1) {
-                    document.getElementById('btnDeleteOnePiece').style.display = 'none';
-                }
-            } else {
-                products = products.filter(p => p.id !== activeEditingProductId);
-                closeProductDetailsModal();
-            }
-
-            localStorage.setItem('my_fridge_items', JSON.stringify(products));
             render();
         }
 
