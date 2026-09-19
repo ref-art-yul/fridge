@@ -490,7 +490,10 @@
 
         function addProduct() {
             const nameInput = document.getElementById('prodName');
-            const name = nameInput.value.trim();
+            let rawName = nameInput.value.trim();
+            if (!rawName) return alert('Напишите название продукта!');
+            // Превращаем первую букву в заглавную, а остальные оставляем как есть
+            const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
             const qty = parseInt(document.getElementById('prodQty').value) || 1;
             const shelf = document.getElementById('prodShelf').value;
             const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
