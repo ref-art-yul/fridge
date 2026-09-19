@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Умный Холодильник — Преврати хаос в порядок!</title>
-    <!-- Подключаем только дизайн Tailwind и иконки, они работают без ошибок -->
-    <script src="https://tailwindcss.com"></script>
-    <script src="https://cloudflare.com" crossorigin="anonymous"></script>
+    
+    <!-- Подключаем стили Tailwind напрямую через официальный быстрый шлюз -->
+    <link rel="stylesheet" href="https://jsdelivr.net">
+    
+    <!-- Подключаем иконки Lucide через резервный стабильный сервер unpkg -->
+    <script src="https://unpkg.com"></script>
+
     <style>
         .shelf-border { border-bottom: 8px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .product-card { transition: all 0.2s ease; }
