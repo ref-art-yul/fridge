@@ -92,13 +92,6 @@
                     <span> fridge </span> Холодильник
                 </h1>
                 <div class="history-btns">
-                    <!-- Кнопка Настроек (Шестерёнка) -->
-                    <button id="btnSettings" onclick="switchScreen('settings')" class="btn-action" title="Настройка полок" style="padding: 6px; margin-right: 4px;">
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-                        </svg>
-                    </button>
                     <button id="btnUndo" onclick="undo()" class="btn-action" disabled title="Отменить последнее действие" style="padding: 6px;">
                         <!-- Красивая толстая стрелка назад (Undo) -->
                         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
@@ -121,6 +114,12 @@
                 <button onclick="setMode('expiry')" id="tab-expiry" class="tab-btn tab-inactive">По сроку ⌛</button>
                 <button onclick="setMode('alpha')" id="tab-alpha" class="tab-btn tab-inactive">А-Я 🔤</button>
                 <button onclick="toggleGroup()" id="tab-group" class="tab-btn tab-inactive">Разгруппировать</button>
+                <button onclick="openSettingsModal()" id="tab-settings" class="tab-btn tab-inactive" style="display: flex; align-items: center; justify-content: center; padding: 0.375rem 0.5rem;" title="Настройка полок">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
+                </button>
             </div>
         </header>
 
@@ -150,6 +149,25 @@
                 <span>Семья</span>
             </button>
         </footer>
+
+        <!-- МОДАЛЬНОЕ ОКНО НАСТРОЙКИ ПОЛОК -->
+        <div id="settingsShelfModal" class="modal-overlay hidden">
+            <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin: 0; color: #0f172a;">Настройка полок</h3>
+                    <span style="font-size: 1.25rem;">⚙️</span>
+                </div>
+                
+                <!-- Контейнер, куда скрипт будет вставлять полки -->
+                <div id="settingsModalListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; max-height: 16rem; overflow-y: auto; padding-right: 0.25rem;"></div>
+                
+                <!-- Кнопки управления (Добавить полку и Закрыть в один ряд) -->
+                <div style="display: flex; gap: 0.75rem; margin-top: 0.75rem; width: 100%;">
+                    <button onclick="addNewShelf()" style="flex: 12; padding: 0.625rem 0; background-color: #4f46e5; color: white; border: none; border-radius: 0.5rem; font-size: 0.85rem; font-weight: 500; cursor: pointer;">+ Добавить полку</button>
+                    <button onclick="closeSettingsModal()" class="btn-cancel" style="flex: 10; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Закрыть</button>
+                </div>
+            </div>
+        </div>
 
         <!-- МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ И РЕДАКТИРОВАНИЯ ПРОДУКТА -->
         <div id="productDetailsModal" class="modal-overlay hidden">
@@ -751,6 +769,7 @@
             if (event.key === 'Escape') {
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
+                const settingsModal = document.getElementById('settingsShelfModal');
                 
                 if (addModal && !addModal.classList.contains('hidden')) {
                     closeModal();
@@ -758,6 +777,7 @@
                 if (detailsModal && !detailsModal.classList.contains('hidden')) {
                     closeProductDetailsModal();
                 }
+                if (settingsModal && !settingsModal.classList.contains('hidden')) closeSettingsModal();
             }
             
             // Сохранение по клавише Enter
@@ -791,6 +811,7 @@
             if (event.target === detailsModal) {
                 closeProductDetailsModal();
             }
+            if (event.target === settingsModal) closeSettingsModal();
         });
 
         // АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ КНОПОК ПОЛОК ДЛЯ ОКНА ДОБАВЛЕНИЯ И РЕДАКТИРОВАНИЯ
@@ -838,65 +859,6 @@
         function changeDetailsShelf(shelfName) {
             detailsSelectedShelf = shelfName;
             renderShelfRadios('detailsShelfRadioContainer', 'detRadio', 'changeDetailsShelf', shelfName);
-        }
-
-        // ЛОГИКА ЭКРАНА НАСТРОЕК ПОЛОК
-        function renderSettings(container) {
-            const wrap = document.createElement('div');
-            wrap.style.display = 'flex';
-            wrap.style.flexDirection = 'column';
-            wrap.style.gap = '1rem';
-
-            const info = document.createElement('p');
-            info.textContent = 'Управляйте полками: меняйте их порядок стрелочками, переименовывайте прямо в полях ввода или удаляйте крестиком.';
-            info.style.fontSize = '0.85rem';
-            info.style.color = '#64748b';
-            info.style.margin = '0 0 0.25rem 0';
-            wrap.appendChild(info);
-
-            const listContainer = document.createElement('div');
-            listContainer.style.display = 'flex';
-            listContainer.style.flexDirection = 'column';
-            listContainer.style.gap = '0.5rem';
-
-            shelves.forEach((shelfName, index) => {
-                const item = document.createElement('div');
-                item.style.display = 'flex';
-                item.style.alignItems = 'center';
-                item.style.justifyContent = 'space-between';
-                item.style.backgroundColor = '#f8fafc';
-                item.style.border = '1px solid #e2e8f0';
-                item.style.padding = '0.5rem 0.75rem';
-                item.style.borderRadius = '0.5rem';
-                item.style.gap = '0.5rem';
-
-                item.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 0.5rem; flex-grow: 1;">
-                        <button onclick="moveShelf(${index}, -1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === 0 ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
-                        <button onclick="moveShelf(${index}, 1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === shelves.length - 1 ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
-                        <input type="text" value="${shelfName}" onchange="renameShelf(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem; font-size: 0.85rem; border-radius: 0.375rem; flex-grow: 1; background: white; font-weight: 500; min-width: 0;">
-                    </div>
-                    <button onclick="deleteShelf(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить полку">✕</button>
-                `;
-                listContainer.appendChild(item);
-            });
-            wrap.appendChild(listContainer);
-
-            const btnAdd = document.createElement('button');
-            btnAdd.textContent = '+ Добавить полку';
-            btnAdd.style.width = '100%';
-            btnAdd.style.padding = '0.625rem';
-            btnAdd.style.backgroundColor = '#4f46e5';
-            btnAdd.style.color = 'white';
-            btnAdd.style.border = 'none';
-            btnAdd.style.borderRadius = '0.5rem';
-            btnAdd.style.fontSize = '0.875rem';
-            btnAdd.style.fontWeight = '500';
-            btnAdd.style.cursor = 'pointer';
-            btnAdd.onclick = addNewShelf;
-            wrap.appendChild(btnAdd);
-
-            container.appendChild(wrap);
         }
 
         function addNewShelf() {
@@ -950,6 +912,96 @@
             shelves[targetIndex] = temp;
             
             localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            render();
+        }
+
+        function openSettingsModal() {
+            document.getElementById('settingsShelfModal').classList.remove('hidden');
+            renderSettingsModalList();
+        }
+
+        function closeSettingsModal() {
+            document.getElementById('settingsShelfModal').classList.add('hidden');
+        }
+
+        function renderSettingsModalList() {
+            const listContainer = document.getElementById('settingsModalListContainer');
+            if (!listContainer) return;
+            listContainer.innerHTML = '';
+
+            shelves.forEach((shelfName, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.backgroundColor = '#f8fafc';
+                item.style.border = '1px solid #e2e8f0';
+                item.style.padding = '0.5rem 0.75rem';
+                item.style.borderRadius = '0.5rem';
+                item.style.gap = '0.5rem';
+
+                item.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 0.4rem; flex-grow: 1;">
+                        <button onclick="moveShelf(${index}, -1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === 0 ? 'disabled style="opacity:0.2;"' : ''}>▲</button>
+                        <button onclick="moveShelf(${index}, 1)" style="background:none; border:none; font-size:1.1rem; cursor:pointer; color:#64748b;" ${index === shelves.length - 1 ? 'disabled style="opacity:0.2;"' : ''}>▼</button>
+                        <input type="text" value="${shelfName}" onchange="renameShelf(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem; font-size: 0.85rem; border-radius: 0.375rem; flex-grow: 1; background: white; font-weight: 500; min-width: 0;">
+                    </div>
+                    <button onclick="deleteShelf(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить полку">✕</button>
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        // Обновим функции добавления, удаления и сортировки, чтобы они сразу перерисовывали список в поп-апе
+        function addNewShelf() {
+            shelves.push('Новая полка ' + (shelves.length + 1));
+            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            renderSettingsModalList();
+            render();
+        }
+
+        function renameShelf(index, oldName) {
+            let newName = oldName.trim();
+            if (!newName) return renderSettingsModalList();
+            const currentOldName = shelves[index];
+            
+            products.forEach(p => { if (p.shelf === currentOldName) p.shelf = newName; });
+            shelves[index] = newName;
+            
+            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            renderSettingsModalList();
+            render();
+        }
+
+        function deleteShelf(index) {
+            const shelfName = shelves[index];
+            const hasProducts = products.some(p => p.shelf === shelfName);
+            if (hasProducts) {
+                if (!confirm(`На полке "${shelfName}" есть продукты. При удалении они автоматически перенесутся на первую доступную полку. Продолжить?`)) return;
+            }
+            
+            shelves.splice(index, 1);
+            if (shelves.length === 0) shelves.push('Основная полка');
+
+            products.forEach(p => { if (p.shelf === shelfName) p.shelf = shelves[0]; });
+
+            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            renderSettingsModalList();
+            render();
+        }
+
+        function moveShelf(index, direction) {
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= shelves.length) return;
+            
+            const temp = shelves[index];
+            shelves[index] = shelves[targetIndex];
+            shelves[targetIndex] = temp;
+            
+            localStorage.setItem('my_fridge_shelves', JSON.stringify(shelves));
+            renderSettingsModalList();
             render();
         }
 
