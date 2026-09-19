@@ -26,6 +26,7 @@
         .shelf-section { margin-bottom: 1.5rem; }
         .shelf-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 0.25rem; }
         .shelf-border { border-bottom: 8px solid #cbd5e1; min-height: 96px; background-color: rgba(248,250,252,0.6); border-radius: 0.75rem 0.75rem 0 0; padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+        .shelf-hover { background-color: rgba(79, 70, 229, 0.15) !important; border-color: #4f46e5 !important; }
         .list-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; justify-content: flex-start; }
         .product-card { position: relative; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; shadow: 0 1px 2px 0 rgba(0,0,0,0.05); width: 4rem; transition: all 0.2s; box-sizing: border-box; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -304,10 +305,9 @@
             if (isGrouped) {
                 displayItems = JSON.parse(JSON.stringify(products));
             } else {
-                const listDiv = document.createElement('div');
-                listDiv.className = 'list-grid';
-                displayItems.forEach(item => { listDiv.appendChild(createProductCard(item)); });
-                container.appendChild(listDiv);
+                products.forEach(p => {
+                    for(let i = 0; i < p.qty; i++) { displayItems.push({...p, qty: 1}); }
+                });
             }
 
             if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
@@ -321,8 +321,8 @@
                     shelfDiv.className = 'shelf-section';
                     shelfDiv.innerHTML = `
                         <h4 class="shelf-title">${shelfName} полка</h4>
-                        <div class="shelf-border">
-                            ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
+                        <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
+                            \${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                         </div>
                     `;
                     const shelfList = shelfDiv.querySelector('.shelf-border');
@@ -336,25 +336,23 @@
                 container.appendChild(listDiv);
             }
         }
+
         function createProductCard(item) {
             const card = document.createElement('div');
             const isExpiring = item.daysLeft <= 1;
             card.className = `product-card ${isExpiring ? 'product-expiring' : ''}`;
+            
+            // Включаем встроенный drag-and-drop браузера
+            card.draggable = true;
+            card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.id); };
+
             card.onclick = () => removeProduct(item.id);
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 && isGrouped ? `<span class="product-badge">${item.qty}</span>` : ''}
+                ${item.qty > 1 && isGrouped ? `<span class="product-badge">\${item.qty}</span>` : ''}
                 <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
-                <div class="trash-overlay" style="background-color: rgba(255, 255, 255, 0.4); backdrop-filter: blur(1px);">
-                    <!-- Плотный красный кружок с белым толстым крестиком внутри -->
-                    <div style="background-color: #ef4444; width: 1.5rem; height: 1.5rem; border-radius: 9999px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15);">
-                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                        </svg>
-                    </div>
-                </div>
+                <div class="trash-overlay"><span style="color: #ef4444; font-weight: bold;">✕</span></div>
             `;
             return card;
         }
@@ -548,6 +546,44 @@
             document.getElementById('prodQty').value = '1';
             document.getElementById('prodDays').value = '5';
             closeModal();
+            render();
+        }
+
+        function handleProductDrop(event, targetShelf) {
+            event.preventDefault();
+            const shelfElement = event.currentTarget;
+            if (shelfElement) shelfElement.classList.remove('shelf-hover');
+
+            const productId = parseInt(event.dataTransfer.getData('text/plain'));
+            if (isNaN(productId)) return;
+
+            const draggedProductIndex = products.findIndex(p => p.id === productId);
+            if (draggedProductIndex === -1) return;
+
+            const draggedProduct = products[draggedProductIndex];
+            
+            // Если полка не поменялась, ничего не делаем
+            if (draggedProduct.shelf === targetShelf) return;
+
+            saveState();
+
+            // Проверяем, есть ли уже такой же продукт на целевой полке
+            const targetProductIndex = products.findIndex(p => 
+                p.name.toLowerCase().trim() === draggedProduct.name.toLowerCase().trim() && 
+                p.shelf === targetShelf
+            );
+
+            if (targetProductIndex !== -1) {
+                // Если есть, суммируем количество
+                products[targetProductIndex].qty += draggedProduct.qty;
+                // Удаляем старую карточку из старого места
+                products.splice(draggedProductIndex, 1);
+            } else {
+                // Если нет, просто меняем полку у текущего продукта
+                draggedProduct.shelf = targetShelf;
+            }
+
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
             render();
         }
 
