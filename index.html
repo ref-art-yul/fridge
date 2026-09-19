@@ -145,26 +145,26 @@
 
         <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ -->
         <div id="addProductModal" class="modal-overlay hidden">
-            <div class="modal-content" style="display: flex; flex-direction: column; gap: 0.5rem;">
-                <h3 class="modal-title" style="margin-bottom: 0.5rem;">Добавить продукт</h3>
+            <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
+                <h3 style="font-size: 1.125rem; font-weight: 700; margin-top: 0; margin-bottom: 0.5rem; color: #0f172a;">Добавить продукт</h3>
                 
-                <!-- Поле названия -->
-                <div class="form-group" style="position: relative; display: flex; flex-direction: column; width: 100%;">
-                    <label class="form-label">Название продукта</label>
-                    <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" autocomplete="off" style="width: 100%;">
-                    <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 100%; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 2.5rem; left: 0;"></div>
+                <!-- Блок Названия -->
+                <div style="position: relative; display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название продукта</label>
+                    <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                    <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 100%; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.25rem; left: 0;"></div>
                 </div>
                 
-                <!-- Поле количества -->
-                <div class="form-group" style="display: flex; flex-direction: column; width: 100%;">
-                    <label class="form-label">Количество</label>
-                    <input type="number" id="prodQty" value="1" min="1" class="form-input" style="width: 100%;">
+                <!-- Блок Количества -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Количество</label>
+                    <input type="number" id="prodQty" value="1" min="1" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                 </div>
                 
-                <!-- Поле выбора полки -->
-                <div class="form-group" style="display: flex; flex-direction: column; width: 100%;">
-                    <label class="form-label">Полка</label>
-                    <select id="prodShelf" class="form-select" style="width: 100%;">
+                <!-- Блок Полки -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Полка</label>
+                    <select id="prodShelf" class="form-select" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                         <option value="Верхняя">Верхняя</option>
                         <option value="Средняя">Средняя</option>
                         <option value="Нижняя">Нижняя</option>
@@ -172,16 +172,16 @@
                     </select>
                 </div>
                 
-                <!-- Поле срока годности -->
-                <div class="form-group" style="display: flex; flex-direction: column; width: 100%;">
-                    <label class="form-label">Срок годности (дней)</label>
-                    <input type="number" id="prodDays" value="5" min="0" class="form-input" style="width: 100%;">
+                <!-- Блок Срока годности -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней)</label>
+                    <input type="number" id="prodDays" value="5" min="0" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                 </div>
                 
-                <!-- Кнопки действий -->
-                <div class="form-actions" style="display: flex; gap: 0.75rem; margin-top: 1rem; width: 100%;">
-                    <button onclick="closeModal()" class="btn-cancel">Отмена</button>
-                    <button onclick="addProduct()" class="btn-submit">Добавить</button>
+                <!-- Кнопки -->
+                <div class="form-actions" style="display: flex !important; flex-direction: row !important; gap: 0.75rem !important; margin-top: 1rem !important; width: 100% !important;">
+                    <button onclick="closeModal()" class="btn-cancel" style="flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Отмена</button>
+                    <button onclick="addProduct()" class="btn-submit" style="flex: 1; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Добавить</button>
                 </div>
             </div>
         </div>
