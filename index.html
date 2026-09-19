@@ -5,35 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Умный Холодильник — Преврати хаос в порядок!</title>
     
-    <!-- Подключаем React и ReactDOM -->
+    <!-- Подключаем стабильные версии библиотек напрямую из сети -->
     <script src="https://unpkg.com" crossorigin></script>
     <script src="https://unpkg.com" crossorigin></script>
-    
-    <!-- Подключаем Babel для компиляции JSX/TSX прямо в браузере -->
     <script src="https://unpkg.com"></script>
-    
-    <!-- Подключаем TailwindCSS и Lucide Иконки -->
     <script src="https://tailwindcss.com"></script>
     <script src="https://unpkg.com"></script>
 
     <style>
         .shelf-border { border-bottom: 8px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .product-card { transition: all 0.2s ease; }
-        /* Прячем стандартный скроллбар для аккуратности мобильного меню */
         .scrollbar-none::-webkit-scrollbar { display: none; }
         .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-slate-100 font-sans min-h-screen text-slate-800">
 
-    <!-- Корневой элемент для React -->
+    <!-- Сюда React смонтирует готовое приложение -->
     <div id="root"></div>
 
-    <!-- Пишем полноценный React-компонент, используя Babel -->
-    <script type="text/babel">
+    <!-- Запускаем код как чистый JSX скрипт без конфликтов с типами TypeScript -->
+    <script type="text/babel" data-presets="react">
         const { useState, useEffect, useMemo, StrictMode } = React;
 
-        // --- Карта Эмодзи ---
+        // --- Карта красивых картинок-эмодзи под продукты ---
         const emojiMap = {
             'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
             'яблоко': '🍎', 'яблоки': '🍎', 'банан': '🍌', 'бананы': '🍌', 'колбаса': '🥩', 'мясо': '🥩',
@@ -49,7 +44,7 @@
             return '📦';
         };
 
-        // --- Стартовые продукты из App.tsx ---
+        // --- Исходные продукты по вашему проекту ---
         const INITIAL_PRODUCTS = [
             { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
             { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
@@ -58,7 +53,7 @@
             { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
         ];
 
-        // --- Встроенная База Рецептов ---
+        // --- Ваша новая Книга Рецептов ---
         const RECIPES_DATABASE = [
             {
                 id: 101,
@@ -76,8 +71,7 @@
                 ingredients: [{ name: "Хлеб", qty: 1 }, { name: "Сыр", qty: 1 }]
             }
         ];
-
-        // --- Главный Компонент App ---
+        // --- Основной Компонент Приложения ---
         function App() {
             const [products, setProducts] = useState(() => {
                 const saved = localStorage.getItem('my_fridge_items');
@@ -91,17 +85,18 @@
             const [isGrouped, setIsGrouped] = useState(true);
             const [isModalOpen, setIsModalOpen] = useState(false);
 
-            // Состояние формы добавления продукта
+            // Состояния полей модального окна добавления
             const [newName, setNewName] = useState('');
             const [newQty, setNewQty] = useState(1);
             const [newShelf, setNewShelf] = useState('Верхняя');
             const [newDays, setNewDays] = useState(5);
 
+            // Автоматическое сохранение в память браузера
             useEffect(() => {
                 localStorage.setItem('my_fridge_items', JSON.stringify(products));
             }, [products]);
 
-            // Активируем отрисовку иконок Lucide при каждом изменении экрана
+            // Обновление векторных иконок при перерисовках экрана
             useEffect(() => {
                 if (window.lucide) window.lucide.createIcons();
             });
@@ -171,7 +166,7 @@
                 });
             };
 
-            // Функция списания продуктов по рецепту
+            // Логика автоматического интерактивного списания продуктов
             const cookRecipe = (recipe) => {
                 saveState();
                 let updatedProducts = [...products];
@@ -193,7 +188,7 @@
                 });
 
                 setProducts(updatedProducts.filter(p => p.qty > 0));
-                alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты списаны.`);
+                alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты автоматически списаны.`);
             };
 
             const displayItems = useMemo(() => {
@@ -215,20 +210,277 @@
                 }
                 return items;
             }, [products, isGrouped, mode]);
-
             return (
-                <div class="bg-slate-100 font-sans min-h-screen text-slate-800">
-                    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col relative pb-24">
+                <div className="bg-slate-100 font-sans min-h-screen text-slate-800">
+                    <div className="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col relative pb-24">
                         
-                        {/* HEADER */}
-                        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-                            <div class="flex justify-between items-center mb-3">
-                                <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-600">
-                                    <i data-lucide={screen === 'fridge' ? "refrigerator" : "book-open"} class="w-6 h-6"></i> 
+                        {/* ШАПКА ПРИЛОЖЕНИЯ */}
+                        <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
+                            <div className="flex justify-between items-center mb-3">
+                                <h1 className="text-xl font-bold flex items-center gap-2 text-indigo-600">
+                                    <i data-lucide={screen === 'fridge' ? "refrigerator" : "book-open"} className="w-6 h-6"></i> 
                                     {screen === 'fridge' ? 'Холодильник' : 'Книга рецептов'}
                                 </h1>
-                                <div class="flex gap-2">
+                                <div className="flex gap-2">
                                     <button 
                                         onClick={undo}
                                         disabled={history.length === 0}
-class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"><buttononClick={redo}disabled={redoStack.length === 0}class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity">{screen === 'fridge' && ({['classic', 'expiry', 'alpha'].map(m => (<buttonkey={m}onClick={() => setMode(m)}class={px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${mode === m ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}}>{m === 'classic' ? 'Полки' : m === 'expiry' ? 'По сроку ⌛' : 'А-Я 🔤'}))}<buttononClick={() => setIsGrouped(!isGrouped)}class={px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${!isGrouped ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}}>{isGrouped ? 'Разгруппировать' : 'Сгруппировать'})}{/* MAIN CONTENT /}{screen === 'fridge' ? (mode === 'classic' ? (['Верхняя', 'Средняя', 'Нижняя', 'Дверца'].map(shelfName => {const shelfItems = displayItems.filter(item => item.shelf === shelfName);return ({shelfName} полка{shelfItems.length === 0 ? (Полка пуста) : (shelfItems.map(item => (<ProductCardkey={item.id}item={item}onClick={() => removeProduct(item.id)}isGrouped={isGrouped}/>)))});})) : ({displayItems.map(item => (<ProductCardkey={item.id}item={item}onClick={() => removeProduct(item.id)}isGrouped={isGrouped}/>))})) : (/ ПАНЕЛЬ РЕЦЕПТОВ */{RECIPES_DATABASE.map(recipe => {let canCook = true;let missingIngredients = 0;const ingStatus = recipe.ingredients.map(ing => {const inFridge = products.filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim()).reduce((sum, p) => sum + p.qty, 0);const hasEnough = inFridge >= ing.qty;if (!hasEnough) { canCook = false; missingIngredients++; }return { ...ing, available: inFridge, ok: hasEnough };});return (<div key={recipe.id} class={p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}}>{recipe.title}Ингредиентов: {recipe.ingredients.length}<span class={px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}}>{canCook ? 'Можно готовить 🍳' : Не хватает: ${missingIngredients}}{ingStatus.map(ing => (<span class={ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}>{getEmoji(ing.name)} {ing.name} ({ing.qty} шт.)<span class={text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}}>{ing.ok ? 'В наличии ✓' : Есть только ${ing.available}}))}{canCook && (<button onClick={() => cookRecipe(recipe)} class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">Приготовить и списать продукты)});})})}{/* FLOATING ADD BUTTON */}{screen === 'fridge' && (<buttononClick={() => setIsModalOpen(true)}class="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105">)}{/* NAV BAR */}<button onClick={() => setScreen('fridge')} class={flex flex-col items-center ${screen === 'fridge' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}}>Холодильник<button onClick={() => setScreen('recipes')} class={flex flex-col items-center ${screen === 'recipes' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}}>Рецепты<button onClick={() => alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')} class="flex flex-col items-center text-slate-400 hover:text-slate-600">Семья{/* MODAL WINDOW */}{isModalOpen && (Добавить продуктНазвание продукта<inputtype="text"value={newName}onChange={(e) => setNewName(e.target.value)}placeholder="Например: Молоко, Сыр, Томаты"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/>Количество<inputtype="number"value={newQty}onChange={(e) => setNewQty(parseInt(e.target.value) || 1)}min="1"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/>Полка<selectvalue={newShelf}onChange={(e) => setNewShelf(e.target.value)}class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">ВерхняяСредняяНижняяДверцаСрок годности (дней)<inputtype="number"value={newDays}onChange={(e) => setNewDays(parseInt(e.target.value) || 0)}min="0"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/><button onClick={() => setIsModalOpen(false)} class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">ОтменаДобавить)});}// --- Карточка продукта ---function ProductCard({ item, onClick, isGrouped }) {const isExpiring = item.daysLeft <= 1;return (<divonClick={onClick}class={product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}}>{getEmoji(item.name)}{item.name}{item.qty > 1 && isGrouped && ({item.qty})}<span class={text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}}>{item.daysLeft} дн.);}// --- Отрендерить приложение в корневой div (Замена main.tsx) ---const rootElement = document.getElementById('root');if (rootElement) {const root = ReactDOM.createRoot(rootElement);root.render();}
+                                        className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"
+                                    >
+                                        <i data-lucide="undo-2" className="w-5 h-5"></i>
+                                    </button>
+                                    <button 
+                                        onClick={redo}
+                                        disabled={redoStack.length === 0}
+                                        className="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"
+                                    >
+                                        <i data-lucide="redo-2" className="w-5 h-5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {screen === 'fridge' && (
+                                <div className="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-none">
+                                    {['classic', 'expiry', 'alpha'].map(m => (
+                                        <button
+                                            key={m}
+                                            onClick={() => setMode(m)}
+                                            className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${mode === m ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                                        >
+                                            {m === 'classic' ? 'Полки' : m === 'expiry' ? 'По сроку ⌛' : 'А-Я 🔤'}
+                                        </button>
+                                    ))}
+                                    <button 
+                                        onClick={() => setIsGrouped(!isGrouped)}
+                                        className={`px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${!isGrouped ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}`}
+                                    >
+                                        {isGrouped ? 'Разгруппировать' : 'Сгруппировать'}
+                                    </button>
+                                </div>
+                            )}
+                        </header>
+                        {/* ОСНОВНОЙ ЭКРАН ХОЛОДИЛЬНИКА */}
+                        <main className="flex-grow p-4 overflow-y-auto">
+                            {screen === 'fridge' ? (
+                                mode === 'classic' ? (
+                                    ['Верхняя', 'Средняя', 'Нижняя', 'Дверца'].map(shelfName => {
+                                        const shelfItems = displayItems.filter(item => item.shelf === shelfName);
+                                        return (
+                                            <div key={shelfName} className="mb-6">
+                                                <h4 className="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wider">
+                                                    {shelfName} полка
+                                                </h4>
+                                                <div className="shelf-border min-h-[96px] bg-slate-50/60 rounded-t-xl p-3 flex flex-wrap gap-4 items-end">
+                                                    {shelfItems.length === 0 ? (
+                                                        <span className="text-xs text-slate-300 italic mx-auto my-auto py-4">Полка пуста</span>
+                                                    ) : (
+                                                        shelfItems.map(item => (
+                                                            <ProductCard 
+                                                                key={item.id} 
+                                                                item={item} 
+                                                                onClick={() => removeProduct(item.id)}
+                                                                isGrouped={isGrouped}
+                                                            />
+                                                        ))
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })
+                                ) : (
+                                    <div className="grid grid-cols-4 gap-4 p-2">
+                                        {displayItems.map(item => (
+                                            <ProductCard 
+                                                key={item.id} 
+                                                item={item} 
+                                                onClick={() => removeProduct(item.id)}
+                                                isGrouped={isGrouped}
+                                            />
+                                        ))}
+                                    </div>
+                                )
+                            ) : (
+                                /* ЭКРАН С КНИГОЙ РЕЦЕПТОВ */
+                                <div className="space-y-4">
+                                    {RECIPES_DATABASE.map(recipe => {
+                                        let canCook = true;
+                                        let missingIngredients = 0;
+
+                                        const ingStatus = recipe.ingredients.map(ing => {
+                                            const inFridge = products
+                                                .filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim())
+                                                .reduce((sum, p) => sum + p.qty, 0);
+                                            const hasEnough = inFridge >= ing.qty;
+                                            if (!hasEnough) { canCook = false; missingIngredients++; }
+                                            return { ...ing, available: inFridge, ok: hasEnough };
+                                        });
+
+                                        return (
+                                            <div key={recipe.id} className={`p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}`}>
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h3 className="font-bold text-slate-800">{recipe.title}</h3>
+                                                        <p className="text-[11px] text-slate-400">Ингредиентов: {recipe.ingredients.length}</p>
+                                                    </div>
+                                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {canCook ? 'Можно готовить 🍳' : `Не хватает: ${missingIngredients}`}
+                                                    </span>
+                                                </div>
+                                                <div className="space-y-1 border-t border-slate-100 pt-2 mb-3">
+                                                    {ingStatus.map(ing => (
+                                                        <div key={ing.name} className="flex justify-between items-center text-xs">
+                                                            <span className={ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}>
+                                                                {getEmoji(ing.name)} {ing.name} ({ing.qty} шт.)
+                                                            </span>
+                                                            <span className={`text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}`}>
+                                                                {ing.ok ? 'В наличии ✓' : `Есть только ${ing.available}`}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                                {canCook && (
+                                                    <button onClick={() => cookRecipe(recipe)} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">
+                                                        Приготовить и списать продукты
+                                                    </button>
+                                                )}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </main>
+                        {/* FLOATING ADD BUTTON */}
+                        {screen === 'fridge' && (
+                            <div className="absolute bottom-24 right-4 z-20">
+                                <button 
+                                    onClick={() => setIsModalOpen(true)}
+                                    className="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105"
+                                >
+                                    <i data-lucide="plus" className="w-8 h-8"></i>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* NAV BAR */}
+                        <footer className="bg-white border-t border-slate-200 p-3 grid grid-cols-3 text-center fixed bottom-0 w-full max-w-md shadow-lg z-10">
+                            <button onClick={() => setScreen('fridge')} className={`flex flex-col items-center ${screen === 'fridge' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <i data-lucide="refrigerator" className="w-6 h-6"></i>
+                                <span className="text-xs mt-1">Холодильник</span>
+                            </button>
+                            <button onClick={() => setScreen('recipes')} className={`flex flex-col items-center ${screen === 'recipes' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}`}>
+                                <i data-lucide="book-open" className="w-6 h-6"></i>
+                                <span className="text-xs mt-1">Рецепты</span>
+                            </button>
+                            <button onClick={() => alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')} className="flex flex-col items-center text-slate-400 hover:text-slate-600">
+                                <i data-lucide="users" className="w-6 h-6"></i>
+                                <span className="text-xs mt-1">Семья</span>
+                            </button>
+                        </footer>
+
+                        {/* MODAL WINDOW */}
+                        {isModalOpen && (
+                            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+                                <div className="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+                                    <h3 className="text-lg font-bold mb-4 text-slate-900">Добавить продукт</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Название продукта</label>
+                                            <input 
+                                                type="text" 
+                                                value={newName}
+                                                onChange={(e) => setNewName(e.target.value)}
+                                                placeholder="Например: Молоко, Сыр" 
+                                                className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Количество</label>
+                                                <input 
+                                                    type="number" 
+                                                    value={newQty}
+                                                    onChange={(e) => setNewQty(parseInt(e.target.value) || 1)}
+                                                    min="1" 
+                                                    className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
+                                                />
+                                            </div>
+                                            <div>
+                                                <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Полка</label>
+                                                <select 
+                                                    value={newShelf}
+                                                    onChange={(e) => setNewShelf(e.target.value)}
+                                                    className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
+                                                >
+                                                    <option value="Верхняя">Верхняя</option>
+                                                    <option value="Средняя">Средняя</option>
+                                                    <option value="Нижняя">Нижняя</option>
+                                                    <option value="Дверца">Дверца</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Срок годности (дней)</label>
+                                            <input 
+                                                type="number" 
+                                                value={newDays}
+                                                onChange={(e) => setNewDays(parseInt(e.target.value) || 0)}
+                                                min="0" 
+                                                className="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"
+                                            />
+                                        </div>
+                                        <div className="flex gap-3 mt-6">
+                                            <button onClick={() => setIsModalOpen(false)} className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">
+                                                Отмена
+                                            </button>
+                                            <button onClick={addProduct} className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm">
+                                                Добавить
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Внутренний компонент карточки еды ---
+        function ProductCard({ item, onClick, isGrouped }) {
+            const isExpiring = item.daysLeft <= 1;
+            return (
+                <div 
+                    onClick={onClick}
+                    className={`product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}`}
+                >
+                    <span className="text-3xl mb-1 select-none">{getEmoji(item.name)}</span>
+                    <span className="text-[10px] text-center font-medium truncate w-full text-slate-700">{item.name}</span>
+                    {item.qty > 1 && isGrouped && (
+                        <span className="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">
+                            {item.qty}
+                        </span>
+                    )}
+                    <span className={`text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}`}>
+                        {item.daysLeft} дн.
+                    </span>
+                    <div className="absolute inset-0 bg-rose-500/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity flex items-center justify-center">
+                        <i data-lucide="trash-2" className="w-4 h-4 text-rose-600 opacity-60"></i>
+                    </div>
+                </div>
+            );
+        }
+
+        // --- Монтирование приложения в DOM ---
+        const rootElement = document.getElementById('root');
+        if (rootElement) {
+            const root = ReactDOM.createRoot(rootElement);
+            root.render(
+                <StrictMode>
+                    <App />
+                </StrictMode>
+            );
+        }
+    </script>
+</body>
+</html>
