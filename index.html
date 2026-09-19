@@ -147,12 +147,12 @@
         <div id="addProductModal" class="modal-overlay hidden">
             <div class="modal-content">
                 <h3 class="modal-title">Добавить продукт</h3>
-                <div class="form-group">
+                    <div class="form-group" style="position: relative;">
                     <label class="form-label">Название продукта</label>
                     <!-- Подключаем к инпуту умный список подсказок через атрибут list -->
                     <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" autocomplete="off">
                     <!-- Сам контейнер для выпадающих подсказок -->
-                    <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 100; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 0.5rem; margin-top: 0.25rem;"></div>
+                    <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 100%; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 0.25rem; left: 0;"></div>
                 </div>
                 </div>
                 <div class="form-row">
