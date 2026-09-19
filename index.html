@@ -802,15 +802,10 @@
         window.addEventListener('click', function(event) {
             const addModal = document.getElementById('addProductModal');
             const detailsModal = document.getElementById('productDetailsModal');
+            const settingsModal = document.getElementById('settingsShelfModal');
             
-            // Если кликнули точно по темному фону добавления, а не по белому окну внутри
-            if (event.target === addModal) {
-                closeModal();
-            }
-            // Если кликнули точно по темному фону редактирования
-            if (event.target === detailsModal) {
-                closeProductDetailsModal();
-            }
+            if (event.target === addModal) closeModal();
+            if (event.target === detailsModal) closeProductDetailsModal();
             if (event.target === settingsModal) closeSettingsModal();
         });
 
