@@ -4,116 +4,175 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Умный Холодильник — Преврати хаос в порядок!</title>
-    
-    <!-- Подключаем стили Tailwind напрямую через официальный быстрый шлюз -->
-    <link rel="stylesheet" href="https://jsdelivr.net">
-    
-    <!-- Подключаем иконки Lucide через резервный стабильный сервер unpkg -->
-    <script src="https://unpkg.com"></script>
-
     <style>
-        .shelf-border { border-bottom: 8px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .product-card { transition: all 0.2s ease; }
-        .scrollbar-none::-webkit-scrollbar { display: none; }
-        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Встраиваем базовые стили приложения прямо в файл, чтобы не зависеть от серверов */
+        body { background-color: #f1f5f9; font-family: system-ui, -apple-system, sans-serif; color: #334155; margin: 0; padding: 0; }
+        .app-container { max-width: 28rem; margin: 0 auto; background-color: #ffffff; min-h: 100vh; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); flex-direction: column; display: flex; position: relative; min-height: 100vh; }
+        header { background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 1rem; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .header-top { display: flex; justify-content: space-between; items-center: center; align-items: center; margin-bottom: 0.75rem; }
+        h1 { font-size: 1.25rem; font-weight: 700; color: #4f46e5; margin: 0; display: flex; align-items: center; gap: 0.5rem; }
+        .history-btns { display: flex; gap: 0.5rem; }
+        .btn-action { padding: 0.5rem; border-radius: 9999px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .btn-action:hover { background-color: #f1f5f9; }
+        .btn-action:disabled { opacity: 0.3; cursor: not-allowed; }
+        .filter-bar { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; font-size: 0.875rem; }
+        .filter-bar::-webkit-scrollbar { display: none; }
+        .tab-btn { px-3; padding: 0.375rem 0.75rem; border-radius: 9999px; border: none; font-weight: 500; white-space: nowrap; cursor: pointer; transition: background-color 0.2s; }
+        .tab-active { background-color: #4f46e5; color: #ffffff; }
+        .tab-inactive { background-color: #f1f5f9; color: #475569; }
+        .tab-inactive:hover { background-color: #e2e8f0; }
+        .tab-amber { background-color: #f59e0b; color: #ffffff; }
+        main { flex-grow: 1; padding: 1rem; overflow-y: auto; padding-bottom: 6rem; }
+        .shelf-section { margin-bottom: 1.5rem; }
+        .shelf-title { font-size: 0.75rem; font-weight: 700; color: #94a3b8; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; padding-left: 0.25rem; }
+        .shelf-border { border-bottom: 8px solid #cbd5e1; min-height: 96px; background-color: rgba(248,250,252,0.6); border-radius: 0.75rem 0.75rem 0 0; padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
+        .list-grid { display: grid; grid-template-cols: repeat(4, minmax(0, 1fr)); gap: 1rem; padding: 0.5rem; }
+        .product-card { position: relative; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; shadow: 0 1px 2px 0 rgba(0,0,0,0.05); width: 4rem; transition: all 0.2s; box-sizing: border-box; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .product-expiring { background-color: #fff1f2; border-color: #fca5a5; }
+        .product-emoji { font-size: 1.875rem; margin-bottom: 0.25rem; user-select: none; }
+        .product-name { font-size: 10px; text-align: center; font-weight: 500; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #334155; }
+        .product-badge { position: absolute; top: -0.25rem; right: -0.25rem; background-color: #4f46e5; color: #ffffff; font-size: 9px; font-weight: 700; px: 1.5; padding: 0.125rem 0.375rem; border-radius: 9999px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); }
+        .product-days { font-size: 8px; margin-top: 0.125rem; font-weight: 600; color: #94a3b8; }
+        .text-rose { color: #e11d48; font-weight: 700; }
+        .trash-overlay { position: absolute; id: 0; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(239,68,68,0.1); border-radius: 0.75rem; opacity: 0; display: flex; align-items: center; justify-content: center; transition: opacity 0.2s; }
+        .product-card:hover .trash-overlay { opacity: 1; }
+        .empty-shelf { font-size: 0.75rem; font-style: italic; color: #cbd5e1; margin: auto; padding: 1rem 0; }
+        /* Стили для Книги рецептов и всплывающих окон */
+        .recipe-card { padding: 1rem; border-radius: 1rem; border: 1px solid #e2e8f0; background-color: #ffffff; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); margin-bottom: 1rem; }
+        .recipe-cookable { border-color: #a7f3d0; background-color: rgba(240, 253, 250, 0.5); }
+        .recipe-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+        .recipe-title { font-weight: 700; color: #1e293b; margin: 0; font-size: 1rem; }
+        .recipe-subtitle { font-size: 11px; color: #94a3b8; margin: 0; }
+        .badge-status { padding: 0.25rem 0.625rem; border-radius: 9999px; font-size: 10px; font-weight: 700; }
+        .badge-emerald { background-color: #d1fae5; color: #065f46; }
+        .badge-amber { background-color: #fef3c7; color: #92400e; }
+        .ingredient-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; margin-top: 0.25rem; }
+        .ing-name-ok { color: #334155; }
+        .ing-name-missing { color: #e11d48; font-weight: 500; }
+        .ing-status-ok { color: #059669; }
+        .ing-status-missing { color: #f43f5e; }
+        .btn-cook { w-full; width: 100%; bg-color: #059669; background-color: #059669; color: #ffffff; font-weight: 500; padding: 0.375rem 0; border-radius: 0.5rem; font-size: 0.75rem; border: none; cursor: pointer; margin-top: 0.75rem; transition: background-color 0.2s; }
+        .btn-cook:hover { background-color: #047857; }
+        .floating-btn { position: absolute; bottom: 6rem; right: 1rem; z-index: 20; }
+        .btn-plus { width: 3.5rem; height: 3.5rem; background-color: #4f46e5; color: #ffffff; border-radius: 9999px; border: none; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.2s; }
+        .btn-plus:hover { background-color: #4338ca; transform: scale(1.05); }
+        .btn-plus svg { width: 2rem; height: 2rem; }
+        footer { background-color: #ffffff; border-top: 1px solid #e2e8f0; padding: 0.75rem; display: grid; grid-template-cols: repeat(3, 1fr); text-align: center; position: fixed; bottom: 0; width: 100%; max-width: 28rem; box-shadow: 0 -4px 6px -1px rgba(0,0,0,0.05); z-index: 10; box-sizing: border-box; }
+        .nav-btn { display: flex; flex-direction: column; align-items: center; background: transparent; border: none; cursor: pointer; font-size: 0.75rem; margin-top: 0.25rem; }
+        .nav-active { color: #4f46e5; font-weight: 600; }
+        .nav-inactive { color: #94a3b8; }
+        .nav-inactive:hover { color: #475569; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); z-index: 50; display: flex; align-items: center; justify-content: center; padding: 1rem; backdrop-filter: blur(4px); }
+        .modal-content { background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); box-sizing: border-box; }
+        .modal-title { font-size: 1.125rem; font-weight: 700; margin-top: 0; margin-bottom: 1rem; color: #0f172a; }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem; }
+        .form-input, .form-select { w-full; width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem; }
+        .form-input:focus, .form-select:focus { outline: none; border-color: #4f46e5; }
+        .form-row { display: grid; grid-template-cols: 1fr 1fr; gap: 0.75rem; }
+        .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
+        .btn-cancel { flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; text-align: center; }
+        .btn-cancel:hover { background-color: #e2e8f0; }
+        .btn-submit { flex: 1; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem; text-align: center; }
+        .btn-submit:hover { background-color: #4338ca; }
+        .hidden { display: none !important; }
     </style>
 </head>
-<body class="bg-slate-100 font-sans min-h-screen text-slate-800">
+<body>
 
-    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col justify-between relative pb-24">
+    <div class="app-container">
         
-        <!-- ШАПКА ПРИЛОЖЕНИЯ -->
-        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
-            <div class="flex justify-between items-center mb-3">
-                <h1 id="appTitle" class="text-xl font-bold flex items-center gap-2 text-indigo-600">
-                    <i data-lucide="refrigerator" class="w-6 h-6"></i> <span>Холодильник</span>
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+        <header>
+            <div class="header-top">
+                <h1 id="appTitle">
+                    <!-- Заменяем SVG-иконку на встроенный смайлик, чтобы не зависеть от Lucide -->
+                    <span> fridge </span> Холодильник
                 </h1>
-                <div class="flex gap-2">
-                    <button id="btnUndo" onclick="undo()" class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity" disabled>
-                        <i data-lucide="undo-2" class="w-5 h-5"></i>
+                <div class="history-btns">
+                    <button id="btnUndo" onclick="undo()" class="btn-action" disabled title="Отменить">
+                        <span style="font-size: 1.25rem; transform: scaleX(-1); display: inline-block;">↩</span>
                     </button>
-                    <button id="btnRedo" onclick="redo()" class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity" disabled>
-                        <i data-lucide="redo-2" class="w-5 h-5"></i>
+                    <button id="btnRedo" onclick="redo()" class="btn-action" disabled title="Повторить">
+                        <span style="font-size: 1.25rem; display: inline-block;">↪</span>
                     </button>
                 </div>
             </div>
             
-            <div id="filterBar" class="flex gap-2 overflow-x-auto pb-1 text-sm scrollbar-none">
-                <button onclick="setMode('classic')" id="tab-classic" class="px-3 py-1.5 rounded-full bg-indigo-600 text-white font-medium whitespace-nowrap">Полки</button>
-                <button onclick="setMode('expiry')" id="tab-expiry" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">По сроку ⌛</button>
-                <button onclick="setMode('alpha')" id="tab-alpha" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">А-Я 🔤</button>
-                <button onclick="toggleGroup()" id="tab-group" class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap">Разгруппировать</button>
+            <div id="filterBar" class="filter-bar">
+                <button onclick="setMode('classic')" id="tab-classic" class="tab-btn tab-active">Полки</button>
+                <button onclick="setMode('expiry')" id="tab-expiry" class="tab-btn tab-inactive">По сроку ⌛</button>
+                <button onclick="setMode('alpha')" id="tab-alpha" class="tab-btn tab-inactive">А-Я 🔤</button>
+                <button onclick="toggleGroup()" id="tab-group" class="tab-btn tab-inactive">Разгруппировать</button>
             </div>
         </header>
 
         <!-- ОСНОВНОЙ КОНТЕНТ -->
-        <main class="flex-grow p-4 overflow-y-auto" id="mainContainer">
-            <!-- Сюда JS добавит полки или рецепты -->
+        <main id="mainContainer">
+            <!-- Сюда JS добавит данные -->
         </main>
 
-        <!-- КНОПКА ДОБАВЛЕНИЯ ПРОДУКТА -->
-        <div id="stickyAddBtn" class="absolute bottom-24 right-4 z-20">
-            <button onclick="openModal()" class="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105">
-                <i data-lucide="plus" class="w-8 h-8"></i>
+        <!-- ПЛАВАЮЩАЯ КНОПКА -->
+        <div id="stickyAddBtn" class="floating-btn">
+            <button onclick="openModal()" class="btn-plus">
+                <span style="font-size: 2rem; line-height: 1; font-weight: 300;">+</span>
             </button>
         </div>
-
         <!-- НИЖНЕЕ МЕНЮ НАВИГАЦИИ -->
-        <footer class="bg-white border-t border-slate-200 p-3 grid grid-cols-3 text-center fixed bottom-0 w-full max-w-md shadow-lg z-10">
-            <button id="navFridge" onclick="switchScreen('fridge')" class="flex flex-col items-center text-indigo-600 font-semibold">
-                <i data-lucide="refrigerator" class="w-6 h-6"></i>
-                <span class="text-xs mt-1">Холодильник</span>
+        <footer>
+            <button id="navFridge" onclick="switchScreen('fridge')" class="nav-btn nav-active">
+                <span style="font-size: 1.25rem;">🏠</span>
+                <span>Холодильник</span>
             </button>
-            <button id="navRecipes" onclick="switchScreen('recipes')" class="flex flex-col items-center text-slate-400 hover:text-slate-600">
-                <i data-lucide="book-open" class="w-6 h-6"></i>
-                <span class="text-xs mt-1">Рецепты</span>
+            <button id="navRecipes" onclick="switchScreen('recipes')" class="nav-btn nav-inactive">
+                <span style="font-size: 1.25rem;">📖</span>
+                <span>Рецепты</span>
             </button>
-            <button onclick="alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')" class="flex flex-col items-center text-slate-400 hover:text-slate-600">
-                <i data-lucide="users" class="w-6 h-6"></i>
-                <span class="text-xs mt-1">Семья</span>
+            <button onclick="alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')" class="nav-btn nav-inactive">
+                <span style="font-size: 1.25rem;">👥</span>
+                <span>Семья</span>
             </button>
         </footer>
 
         <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ -->
-        <div id="addProductModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div class="bg-white rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-                <h3 class="text-lg font-bold mb-4 text-slate-900">Добавить продукт</h3>
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Название продукта</label>
-                        <input type="text" id="prodName" placeholder="Например: Молоко, Сыр, Томаты" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
+        <div id="addProductModal" class="modal-overlay hidden">
+            <div class="modal-content">
+                <h3 class="modal-title">Добавить продукт</h3>
+                <div class="form-group">
+                    <label class="form-label">Название продукта</label>
+                    <input type="text" id="prodName" placeholder="Например: Молоко, Сыр, Томаты" class="form-input">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Количество</label>
+                        <input type="number" id="prodQty" value="1" min="1" class="form-input">
                     </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Количество</label>
-                            <input type="number" id="prodQty" value="1" min="1" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Полка</label>
-                            <select id="prodShelf" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-                                <option value="Верхняя">Верхняя</option>
-                                <option value="Средняя">Средняя</option>
-                                <option value="Нижняя">Нижняя</option>
-                                <option value="Дверца">Дверца</option>
-                            </select>
-                        </div>
+                    <div class="form-group">
+                        <label class="form-label">Полка</label>
+                        <select id="prodShelf" class="form-select">
+                            <option value="Верхняя">Верхняя</option>
+                            <option value="Средняя">Средняя</option>
+                            <option value="Нижняя">Нижняя</option>
+                            <option value="Дверца">Дверца</option>
+                        </select>
                     </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-500 uppercase mb-1">Срок годности (дней)</label>
-                        <input type="number" id="prodDays" value="5" min="0" class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">
-                    </div>
-                    <div class="flex gap-3 mt-6">
-                        <button onclick="closeModal()" class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">Отмена</button>
-                        <button onclick="addProduct()" class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-lg text-sm">Добавить</button>
-                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Срок годности (дней)</label>
+                    <input type="number" id="prodDays" value="5" min="0" class="form-input">
+                </div>
+                <div class="form-actions">
+                    <button onclick="closeModal()" class="btn-cancel">Отмена</button>
+                    <button onclick="addProduct()" class="btn-submit">Добавить</button>
                 </div>
             </div>
         </div>
 
     </div>
-    <!-- СЦЕНАРИЙ ЛОГИКИ ПРИЛОЖЕНИЯ -->
+
+    <!-- АВТОНОМНЫЙ СКРИПТ ЛОГИКИ -->
     <script>
-        // --- Карта красивых картинок-эмодзи под продукты ---
         const emojiMap = {
             'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
             'яблоко': '🍎', 'яблоки': '🍎', 'банан': '🍌', 'бананы': '🍌', 'колбаса': '🥩', 'мясо': '🥩',
@@ -128,8 +187,6 @@
             }
             return '📦';
         };
-
-        // --- Встроенная База Рецептов ---
         const recipesDatabase = [
             {
                 id: 101,
@@ -148,7 +205,6 @@
             }
         ];
 
-        // --- Переменные состояния ---
         let products = JSON.parse(localStorage.getItem('my_fridge_items')) || [
             { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
             { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
@@ -157,10 +213,9 @@
             { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
         ];
 
-        let currentScreen = 'fridge'; // fridge, recipes
-        let currentMode = 'classic'; // classic, expiry, alpha
+        let currentScreen = 'fridge';
+        let currentMode = 'classic';
         let isGrouped = true;
-
         let historyUndo = [];
         let historyRedo = [];
 
@@ -196,40 +251,35 @@
         }
 
         function switchScreen(screen) {
+            currentScreen = screen;
             const title = document.getElementById('appTitle');
             const filterBar = document.getElementById('filterBar');
             const addBtn = document.getElementById('stickyAddBtn');
             const navFridge = document.getElementById('navFridge');
             const navRecipes = document.getElementById('navRecipes');
 
-            currentScreen = screen;
-
             if (screen === 'fridge') {
-                title.innerHTML = '<i data-lucide="refrigerator" class="w-6 h-6"></i> <span>Холодильник</span>';
+                title.innerHTML = '<span>🥛</span> Холодильник';
                 filterBar.classList.remove('hidden');
                 addBtn.classList.remove('hidden');
-                navFridge.className = "flex flex-col items-center text-indigo-600 font-semibold";
-                navRecipes.className = "flex flex-col items-center text-slate-400 hover:text-slate-600";
+                navFridge.className = "nav-btn nav-active";
+                navRecipes.className = "nav-btn nav-inactive";
             } else {
-                title.innerHTML = '<i data-lucide="book-open" class="w-6 h-6"></i> <span>Книга рецептов</span>';
+                title.innerHTML = '<span>📖</span> Книга рецептов';
                 filterBar.classList.add('hidden');
                 addBtn.classList.add('hidden');
-                navFridge.className = "flex flex-col items-center text-slate-400 hover:text-slate-600";
-                navRecipes.className = "flex flex-col items-center text-indigo-600 font-semibold";
+                navFridge.className = "nav-btn nav-inactive";
+                navRecipes.className = "nav-btn nav-active";
             }
             render();
         }
+
         function render() {
             const container = document.getElementById('mainContainer');
             if (!container) return;
             container.innerHTML = '';
-
-            if (currentScreen === 'fridge') {
-                renderFridge(container);
-            } else {
-                renderRecipes(container);
-            }
-            if (window.lucide) window.lucide.createIcons();
+            if (currentScreen === 'fridge') { renderFridge(container); } 
+            else { renderRecipes(container); }
         }
 
         function renderFridge(container) {
@@ -238,28 +288,23 @@
                 displayItems = JSON.parse(JSON.stringify(products));
             } else {
                 products.forEach(p => {
-                    for(let i = 0; i < p.qty; i++) {
-                        displayItems.push({...p, qty: 1});
-                    }
+                    for(let i = 0; i < p.qty; i++) { displayItems.push({...p, qty: 1}); }
                 });
             }
 
-            if (currentMode === 'expiry') {
-                displayItems.sort((a, b) => a.daysLeft - b.daysLeft);
-            } else if (currentMode === 'alpha') {
-                displayItems.sort((a, b) => a.name.localeCompare(b.name));
-            }
+            if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
+            else if (currentMode === 'alpha') { displayItems.sort((a, b) => a.name.localeCompare(b.name)); }
 
             if (currentMode === 'classic') {
                 const shelves = ['Верхняя', 'Средняя', 'Нижняя', 'Дверца'];
                 shelves.forEach(shelfName => {
                     const shelfItems = displayItems.filter(item => item.shelf === shelfName);
                     const shelfDiv = document.createElement('div');
-                    shelfDiv.className = 'mb-6';
+                    shelfDiv.className = 'shelf-section';
                     shelfDiv.innerHTML = `
-                        <h4 class="text-xs font-bold text-slate-400 mb-2 px-1 uppercase tracking-wider">${shelfName} полка</h4>
-                        <div class="shelf-border min-h-[96px] bg-slate-50/60 rounded-t-xl p-3 flex flex-wrap gap-4 items-end">
-                            ${shelfItems.length === 0 ? '<span class="text-xs text-slate-300 italic self-center mx-auto my-auto py-4">Полка пуста</span>' : ''}
+                        <h4 class="shelf-title">${shelfName} полка</h4>
+                        <div class="shelf-border">
+                            ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                         </div>
                     `;
                     const shelfList = shelfDiv.querySelector('.shelf-border');
@@ -268,33 +313,28 @@
                 });
             } else {
                 const listDiv = document.createElement('div');
-                listDiv.className = 'grid grid-cols-4 gap-4 p-2';
+                listDiv.className = 'list-grid';
                 displayItems.forEach(item => { listDiv.appendChild(createProductCard(item)); });
                 container.appendChild(listDiv);
             }
         }
-
         function createProductCard(item) {
             const card = document.createElement('div');
             const isExpiring = item.daysLeft <= 1;
-            card.className = `product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}`;
+            card.className = `product-card ${isExpiring ? 'product-expiring' : ''}`;
             card.onclick = () => removeProduct(item.id);
             card.innerHTML = `
-                <span class="text-3xl mb-1 select-none">${getEmoji(item.name)}</span>
-                <span class="text-[10px] text-center font-medium truncate w-full text-slate-700">${item.name}</span>
-                ${item.qty > 1 && isGrouped ? `<span class="absolute -top-1 -right-1 bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">${item.qty}</span>` : ''}
-                <span class="text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}">${item.daysLeft} дн.</span>
-                <div class="absolute inset-0 bg-rose-500/10 opacity-0 group-hover:opacity-100 rounded-xl transition-opacity flex items-center justify-center">
-                    <i data-lucide="trash-2" class="w-4 h-4 text-rose-600 opacity-60"></i>
-                </div>
+                <span class="product-emoji">${getEmoji(item.name)}</span>
+                <span class="product-name">${item.name}</span>
+                ${item.qty > 1 && isGrouped ? `<span class="product-badge">\${item.qty}</span>` : ''}
+                <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
+                <div class="trash-overlay"><span style="color: #ef4444; font-weight: bold;">✕</span></div>
             `;
             return card;
         }
 
         function renderRecipes(container) {
             const listDiv = document.createElement('div');
-            listDiv.className = 'space-y-4';
-
             recipesDatabase.forEach(recipe => {
                 let canCook = true;
                 let missingIngredients = 0;
@@ -306,24 +346,24 @@
                 });
 
                 const card = document.createElement('div');
-                card.className = `p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}`;
+                card.className = `recipe-card ${canCook ? 'recipe-cookable' : ''}`;
                 let ingredientsHTML = ingStatus.map(ing => `
-                    <div class="flex justify-between items-center text-xs mt-1">
-                        <span class="${ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
-                        <span class="text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}">${ing.ok ? 'В наличии ✓' : `Есть только ${ing.available}`}</span>
+                    <div class="ingredient-row">
+                        <span class="${ing.ok ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
+                        <span class="${ing.ok ? 'ing-status-ok' : 'ing-status-missing'}">${ing.ok ? '✓' : `Мало (есть \${ing.available})`}</span>
                     </div>
                 `).join('');
 
                 card.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
+                    <div class="recipe-header">
                         <div>
-                            <h3 class="font-bold text-slate-800">${recipe.title}</h3>
-                            <p class="text-[11px] text-slate-400">Ингредиентов: ${recipe.ingredients.length}</p>
+                            <h3 class="recipe-title">${recipe.title}</h3>
+                            <p class="recipe-subtitle">Компонентов: ${recipe.ingredients.length}</p>
                         </div>
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}">${canCook ? 'Можно готовить 🍳' : `Не хватает: ${missingIngredients}`}</span>
+                        <span class="badge-status ${canCook ? 'badge-emerald' : 'badge-amber'}">${canCook ? 'Можно готовить' : `Нет продуктов: \${missingIngredients}`}</span>
                     </div>
-                    <div class="space-y-1 border-t border-slate-100 pt-2 mb-3">${ingredientsHTML}</div>
-                    ${canCook ? `<button onclick="event.stopPropagation(); cookRecipe(${recipe.id})" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">Приготовить и списать продукты</button>` : ''}
+                    <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">${ingredientsHTML}</div>
+                    ${canCook ? `<button onclick="event.stopPropagation(); cookRecipe(\${recipe.id})" class="btn-cook">Приготовить блюдо</button>` : ''}
                 `;
                 listDiv.appendChild(card);
             });
@@ -334,21 +374,19 @@
             const recipe = recipesDatabase.find(r => r.id === recipeId);
             if (!recipe) return;
             saveState();
-
             recipe.ingredients.forEach(ing => {
                 let needed = ing.qty;
                 for (let i = 0; i < products.length; i++) {
                     if (products[i].name.toLowerCase().trim() === ing.name.toLowerCase().trim()) {
-                        if (products[i].qty >= needed) { products[i].qty -= needed; needed = 0; }
+                        if (products[i].qty >= needed) { products[i].qty -= needed; needed = 0; } 
                         else { needed -= products[i].qty; products[i].qty = 0; }
                     }
                     if (needed === 0) break;
                 }
             });
-
             products = products.filter(p => p.qty > 0);
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
-            alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты автоматически списаны.`);
+            alert(`Успешно приготовлено! Продукты удалены с полок.`);
             render();
         }
 
@@ -356,7 +394,8 @@
             currentMode = mode;
             ['classic', 'expiry', 'alpha'].forEach(m => {
                 const btn = document.getElementById(`tab-${m}`);
-                if(btn) btn.className = (m === mode) ? "px-3 py-1.5 rounded-full bg-indigo-600 text-white font-medium whitespace-nowrap" : "px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap";
+                if (m === mode) { if(btn) btn.className = "tab-btn tab-active"; } 
+                else { if(btn) btn.className = "tab-btn tab-inactive"; }
             });
             render();
         }
@@ -364,9 +403,9 @@
         function toggleGroup() {
             isGrouped = !isGrouped;
             const btn = document.getElementById('tab-group');
-            if(btn) {
+            if (btn) {
                 btn.textContent = isGrouped ? 'Разгруппировать' : 'Сгруппировать';
-                btn.className = isGrouped ? "px-3 py-1.5 rounded-full bg-slate-100 text-slate-600 hover:bg-slate-200 whitespace-nowrap" : "px-3 py-1.5 rounded-full bg-amber-500 text-white font-medium whitespace-nowrap";
+                btn.className = isGrouped ? "tab-btn tab-inactive" : "tab-btn tab-amber";
             }
             render();
         }
@@ -375,10 +414,9 @@
             saveState();
             const index = products.findIndex(p => p.id === id);
             if (index !== -1) {
-                if (products[index].qty > 1) { products[index].qty -= 1; }
+                if (products[index].qty > 1) { products[index].qty -= 1; } 
                 else { products.splice(index, 1); }
             }
-            localStorage.setItem('my_fridge_items', JSON.stringify(products));
             render();
         }
 
@@ -392,16 +430,20 @@
             const shelf = document.getElementById('prodShelf').value;
             const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
 
-            if (!name) return alert('Пожалуйста, напишите название продукта!');
+            if (!name) return alert('Напишите название продукта!');
             saveState();
-            
             const existing = products.find(p => p.name.toLowerCase() === name.toLowerCase() && p.shelf === shelf);
-            if (existing) { existing.qty += qty; }
+            if (existing) { existing.qty += qty; } 
             else { products.push({ id: Date.now(), name, qty, shelf, daysLeft }); }
 
             nameInput.value = '';
             document.getElementById('prodQty').value = '1';
             document.getElementById('prodDays').value = '5';
-            closeModal();localStorage.setItem('my_fridge_items', JSON.stringify(products));render();
+            closeModal();
+            render();
         }
+
         render();
+    </script>
+</body>
+</html>
