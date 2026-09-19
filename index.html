@@ -181,10 +181,17 @@
                     </div>
                 </div>
                 
-                <!-- Кнопки управления: Удалить (текстом слева), Отмена и Сохранить (вместе справа) -->
+                <!-- Кнопки управления: Иконка корзины (слева с отступом), Отмена и Сохранить (вместе справа) -->
                 <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 1rem; width: 100%;">
-                    <!-- Прозрачная кнопка Удалить с красным текстом с левой стороны -->
-                    <button onclick="deleteAllProductFromDetails()" style="padding: 0.625rem 0; background-color: transparent; color: #ef4444; font-weight: 600; border: none; cursor: pointer; font-size: 0.85rem; text-align: left; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">Удалить</button>
+                    <!-- Красная прозрачная иконка корзины с визуальным отступом справа (margin-right) -->
+                    <button onclick="deleteAllProductFromDetails()" style="padding: 0.5rem; background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-right: 1.5rem; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'" title="Удалить с полки">
+                        <!-- Чистый SVG-чертеж толстой аккуратной корзины в стиле вашего приложения -->
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                    </button>
                     
                     <!-- Блок кнопок Отмена и Сохранить с правой стороны -->
                     <div style="display: flex; gap: 0.5rem; flex-grow: 1; justify-content: flex-end;">
