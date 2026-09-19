@@ -350,7 +350,7 @@
                 let ingredientsHTML = ingStatus.map(ing => `
                     <div class="ingredient-row">
                         <span class="${ing.ok ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
-                        <span class="${ing.ok ? 'ing-status-ok' : 'ing-status-missing'}">${ing.ok ? '✓' : `Мало (есть \${ing.available})`}</span>
+                        <span class="${ing.ok ? 'ing-status-ok' : 'ing-status-missing'}">${ing.ok ? '✓' : `Мало (есть ${ing.available})`}</span>
                     </div>
                 `).join('');
 
@@ -360,10 +360,10 @@
                             <h3 class="recipe-title">${recipe.title}</h3>
                             <p class="recipe-subtitle">Компонентов: ${recipe.ingredients.length}</p>
                         </div>
-                        <span class="badge-status ${canCook ? 'badge-emerald' : 'badge-amber'}">${canCook ? 'Можно готовить' : `Нет продуктов: \${missingIngredients}`}</span>
+                        <span class="badge-status ${canCook ? 'badge-emerald' : 'badge-amber'}">${canCook ? 'Можно готовить' : `Нет продуктов: ${missingIngredients}`}</span>
                     </div>
                     <div style="margin-top: 0.5rem; padding-top: 0.5rem; border-top: 1px dashed #e2e8f0;">${ingredientsHTML}</div>
-                    ${canCook ? `<button onclick="event.stopPropagation(); cookRecipe(\${recipe.id})" class="btn-cook">Приготовить блюдо</button>` : ''}
+                    ${canCook ? `<button onclick="event.stopPropagation(); cookRecipe(${recipe.id})" class="btn-cook">Приготовить блюдо</button>` : ''}
                 `;
                 listDiv.appendChild(card);
             });
