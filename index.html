@@ -486,11 +486,16 @@
             const container = document.getElementById('customSuggestions');
             if (!container) return;
             
-            // Если поле пустое, можем показать вообще все уникальные продукты из холодильника
             const searchStr = value.toLowerCase().trim();
-            const uniqueNames = [...new Set(products.map(p => p.name))];
+
+            // ЧЁТКОЕ ИСПРАВЛЕНИЕ: Если в поле ввода ничего нет (пусто), 
+            // принудительно прячем выпадашку и выходим из функции
+            if (searchStr.length === 0) {
+                container.classList.add('hidden');
+                return;
+            }
             
-            // Фильтруем список без учета регистра букв
+            const uniqueNames = [...new Set(products.map(p => p.name))];
             const filtered = uniqueNames.filter(name => name.toLowerCase().includes(searchStr));
 
             if (filtered.length === 0) {
@@ -510,7 +515,6 @@
                 div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
                 div.onmouseout = () => div.style.backgroundColor = 'transparent';
                 
-                // При клике на подсказку подставляем текст в инпут и прячем меню
                 div.onclick = () => {
                     document.getElementById('prodName').value = name;
                     container.classList.add('hidden');
