@@ -91,11 +91,19 @@
                     <span> fridge </span> Холодильник
                 </h1>
                 <div class="history-btns">
-                    <button id="btnUndo" onclick="undo()" class="btn-action" disabled title="Отменить последнее действие">
-                        <span style="font-size: 1.15rem; font-weight: bold; color: #4f46e5;">↶</span>
+                    <button id="btnUndo" onclick="undo()" class="btn-action" disabled title="Отменить последнее действие" style="padding: 6px;">
+                        <!-- Красивая толстая стрелка назад (Undo) -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 7v6h6" />
+                            <path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13" />
+                        </svg>
                     </button>
-                    <button id="btnRedo" onclick="redo()" class="btn-action" disabled title="Повторить отмененное действие">
-                        <span style="font-size: 1.15rem; font-weight: bold; color: #4f46e5;">↷</span>
+                    <button id="btnRedo" onclick="redo()" class="btn-action" disabled title="Повторить отмененное действие" style="padding: 6px;">
+                        <!-- Красивая толстая стрелка вперед (Redo) -->
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4f46e5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 7v6h-6" />
+                            <path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7" />
+                        </svg>
                     </button>
                 </div>
             </div>
