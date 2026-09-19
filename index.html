@@ -1,13 +1,234 @@
 <!DOCTYPE html>
 <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Умный Холодильник — Преврати хаос в порядок!</title>
-  </head>
-  <body>
+    
+    <!-- Подключаем React и ReactDOM -->
+    <script src="https://unpkg.com" crossorigin></script>
+    <script src="https://unpkg.com" crossorigin></script>
+    
+    <!-- Подключаем Babel для компиляции JSX/TSX прямо в браузере -->
+    <script src="https://unpkg.com"></script>
+    
+    <!-- Подключаем TailwindCSS и Lucide Иконки -->
+    <script src="https://tailwindcss.com"></script>
+    <script src="https://unpkg.com"></script>
+
+    <style>
+        .shelf-border { border-bottom: 8px solid #cbd5e1; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .product-card { transition: all 0.2s ease; }
+        /* Прячем стандартный скроллбар для аккуратности мобильного меню */
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-100 font-sans min-h-screen text-slate-800">
+
+    <!-- Корневой элемент для React -->
     <div id="root"></div>
-    <!-- Ссылка на файл запуска -->
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
+
+    <!-- Пишем полноценный React-компонент, используя Babel -->
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, StrictMode } = React;
+
+        // --- Карта Эмодзи ---
+        const emojiMap = {
+            'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
+            'яблоко': '🍎', 'яблоки': '🍎', 'банан': '🍌', 'бананы': '🍌', 'колбаса': '🥩', 'мясо': '🥩',
+            'рыба': '🐟', 'огурец': '🥒', 'огурцы': '🥒', 'лимон': '🍋', 'хлеб': '🍞', 'соус': '🥫', 'кетчуп': '🥫',
+            'масло': '🧈', 'йогурт': '🍦', 'пиво': '🍺', 'вино': '🍷', 'сок': '🧃'
+        };
+
+        const getEmoji = (name) => {
+            const cleanName = name.toLowerCase().trim();
+            for (const key in emojiMap) {
+                if (cleanName.includes(key)) return emojiMap[key];
+            }
+            return '📦';
+        };
+
+        // --- Стартовые продукты из App.tsx ---
+        const INITIAL_PRODUCTS = [
+            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя', daysLeft: 3 },
+            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя', daysLeft: 7 },
+            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя', daysLeft: 1 },
+            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя', daysLeft: 12 },
+            { id: 5, name: 'Соус', qty: 1, shelf: 'Дверца', daysLeft: 30 }
+        ];
+
+        // --- Встроенная База Рецептов ---
+        const RECIPES_DATABASE = [
+            {
+                id: 101,
+                title: "Классический омлет",
+                ingredients: [{ name: "Яйца", qty: 2 }, { name: "Молоко", qty: 1 }]
+            },
+            {
+                id: 102,
+                title: "Свежий салат",
+                ingredients: [{ name: "Томаты", qty: 2 }]
+            },
+            {
+                id: 103,
+                title: "Бутерброд с сыром",
+                ingredients: [{ name: "Хлеб", qty: 1 }, { name: "Сыр", qty: 1 }]
+            }
+        ];
+
+        // --- Главный Компонент App ---
+        function App() {
+            const [products, setProducts] = useState(() => {
+                const saved = localStorage.getItem('my_fridge_items');
+                return saved ? JSON.parse(saved) : INITIAL_PRODUCTS;
+            });
+
+            const [history, setHistory] = useState([]);
+            const [redoStack, setRedoStack] = useState([]);
+            const [screen, setScreen] = useState('fridge'); // 'fridge' или 'recipes'
+            const [mode, setMode] = useState('classic'); // 'classic', 'expiry', 'alpha'
+            const [isGrouped, setIsGrouped] = useState(true);
+            const [isModalOpen, setIsModalOpen] = useState(false);
+
+            // Состояние формы добавления продукта
+            const [newName, setNewName] = useState('');
+            const [newQty, setNewQty] = useState(1);
+            const [newShelf, setNewShelf] = useState('Верхняя');
+            const [newDays, setNewDays] = useState(5);
+
+            useEffect(() => {
+                localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            }, [products]);
+
+            // Активируем отрисовку иконок Lucide при каждом изменении экрана
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            });
+
+            const saveState = () => {
+                setHistory(prev => [...prev.slice(-19), JSON.stringify(products)]);
+                setRedoStack([]);
+            };
+
+            const undo = () => {
+                if (history.length === 0) return;
+                const prevState = history[history.length - 1];
+                setRedoStack(prev => [...prev, JSON.stringify(products)]);
+                setProducts(JSON.parse(prevState));
+                setHistory(prev => prev.slice(0, -1));
+            };
+
+            const redo = () => {
+                if (redoStack.length === 0) return;
+                const nextState = redoStack[redoStack.length - 1];
+                setHistory(prev => [...prev, JSON.stringify(products)]);
+                setProducts(JSON.parse(nextState));
+                setRedoStack(prev => prev.slice(0, -1));
+            };
+
+            const addProduct = () => {
+                if (!newName.trim()) return alert('Пожалуйста, напишите название продукта!');
+                
+                saveState();
+                const existingIndex = products.findIndex(
+                    p => p.name.toLowerCase() === newName.toLowerCase() && p.shelf === newShelf
+                );
+
+                if (existingIndex > -1) {
+                    const updated = [...products];
+                    updated[existingIndex].qty += newQty;
+                    setProducts(updated);
+                } else {
+                    setProducts(prev => [...prev, {
+                        id: Date.now(),
+                        name: newName,
+                        qty: newQty,
+                        shelf: newShelf,
+                        daysLeft: newDays
+                    }]);
+                }
+
+                setNewName('');
+                setNewQty(1);
+                setNewDays(5);
+                setIsModalOpen(false);
+            };
+
+            const removeProduct = (id) => {
+                saveState();
+                setProducts(prev => {
+                    const index = prev.findIndex(p => p.id === id);
+                    if (index === -1) return prev;
+                    
+                    const updated = [...prev];
+                    if (updated[index].qty > 1) {
+                        updated[index].qty -= 1;
+                        return updated;
+                    } else {
+                        return updated.filter(p => p.id !== id);
+                    }
+                });
+            };
+
+            // Функция списания продуктов по рецепту
+            const cookRecipe = (recipe) => {
+                saveState();
+                let updatedProducts = [...products];
+
+                recipe.ingredients.forEach(ing => {
+                    let needed = ing.qty;
+                    for (let i = 0; i < updatedProducts.length; i++) {
+                        if (updatedProducts[i].name.toLowerCase().trim() === ing.name.toLowerCase().trim()) {
+                            if (updatedProducts[i].qty >= needed) {
+                                updatedProducts[i].qty -= needed;
+                                needed = 0;
+                            } else {
+                                needed -= updatedProducts[i].qty;
+                                updatedProducts[i].qty = 0;
+                            }
+                        }
+                        if (needed === 0) break;
+                    }
+                });
+
+                setProducts(updatedProducts.filter(p => p.qty > 0));
+                alert(`Блюдо "${recipe.title}" успешно приготовлено! Ингредиенты списаны.`);
+            };
+
+            const displayItems = useMemo(() => {
+                let items = [];
+                if (isGrouped) {
+                    items = [...products];
+                } else {
+                    products.forEach(p => {
+                        for (let i = 0; i < p.qty; i++) {
+                            items.push({ ...p, qty: 1 });
+                        }
+                    });
+                }
+
+                if (mode === 'expiry') {
+                    items.sort((a, b) => a.daysLeft - b.daysLeft);
+                } else if (mode === 'alpha') {
+                    items.sort((a, b) => a.name.localeCompare(b.name));
+                }
+                return items;
+            }, [products, isGrouped, mode]);
+
+            return (
+                <div class="bg-slate-100 font-sans min-h-screen text-slate-800">
+                    <div class="max-w-md mx-auto bg-white min-h-screen shadow-xl flex flex-col relative pb-24">
+                        
+                        {/* HEADER */}
+                        <header class="bg-white border-b border-slate-200 p-4 sticky top-0 z-10 shadow-sm">
+                            <div class="flex justify-between items-center mb-3">
+                                <h1 class="text-xl font-bold flex items-center gap-2 text-indigo-600">
+                                    <i data-lucide={screen === 'fridge' ? "refrigerator" : "book-open"} class="w-6 h-6"></i> 
+                                    {screen === 'fridge' ? 'Холодильник' : 'Книга рецептов'}
+                                </h1>
+                                <div class="flex gap-2">
+                                    <button 
+                                        onClick={undo}
+                                        disabled={history.length === 0}
+class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity"><buttononClick={redo}disabled={redoStack.length === 0}class="p-2 rounded-full hover:bg-slate-100 disabled:opacity-30 transition-opacity">{screen === 'fridge' && ({['classic', 'expiry', 'alpha'].map(m => (<buttonkey={m}onClick={() => setMode(m)}class={px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${mode === m ? "bg-indigo-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}}>{m === 'classic' ? 'Полки' : m === 'expiry' ? 'По сроку ⌛' : 'А-Я 🔤'}))}<buttononClick={() => setIsGrouped(!isGrouped)}class={px-3 py-1.5 rounded-full font-medium whitespace-nowrap transition-colors ${!isGrouped ? "bg-amber-500 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"}}>{isGrouped ? 'Разгруппировать' : 'Сгруппировать'})}{/* MAIN CONTENT /}{screen === 'fridge' ? (mode === 'classic' ? (['Верхняя', 'Средняя', 'Нижняя', 'Дверца'].map(shelfName => {const shelfItems = displayItems.filter(item => item.shelf === shelfName);return ({shelfName} полка{shelfItems.length === 0 ? (Полка пуста) : (shelfItems.map(item => (<ProductCardkey={item.id}item={item}onClick={() => removeProduct(item.id)}isGrouped={isGrouped}/>)))});})) : ({displayItems.map(item => (<ProductCardkey={item.id}item={item}onClick={() => removeProduct(item.id)}isGrouped={isGrouped}/>))})) : (/ ПАНЕЛЬ РЕЦЕПТОВ */{RECIPES_DATABASE.map(recipe => {let canCook = true;let missingIngredients = 0;const ingStatus = recipe.ingredients.map(ing => {const inFridge = products.filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim()).reduce((sum, p) => sum + p.qty, 0);const hasEnough = inFridge >= ing.qty;if (!hasEnough) { canCook = false; missingIngredients++; }return { ...ing, available: inFridge, ok: hasEnough };});return (<div key={recipe.id} class={p-4 rounded-2xl border bg-white shadow-sm transition ${canCook ? 'border-emerald-200 bg-emerald-50/20' : 'border-slate-200'}}>{recipe.title}Ингредиентов: {recipe.ingredients.length}<span class={px-2.5 py-1 rounded-full text-[10px] font-bold ${canCook ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'}}>{canCook ? 'Можно готовить 🍳' : Не хватает: ${missingIngredients}}{ingStatus.map(ing => (<span class={ing.ok ? "text-slate-700" : "text-rose-600 font-medium"}>{getEmoji(ing.name)} {ing.name} ({ing.qty} шт.)<span class={text-[11px] ${ing.ok ? "text-emerald-600" : "text-rose-500"}}>{ing.ok ? 'В наличии ✓' : Есть только ${ing.available}}))}{canCook && (<button onClick={() => cookRecipe(recipe)} class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-1.5 rounded-lg text-xs transition">Приготовить и списать продукты)});})})}{/* FLOATING ADD BUTTON */}{screen === 'fridge' && (<buttononClick={() => setIsModalOpen(true)}class="w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-lg flex items-center justify-center transition transform hover:scale-105">)}{/* NAV BAR */}<button onClick={() => setScreen('fridge')} class={flex flex-col items-center ${screen === 'fridge' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}}>Холодильник<button onClick={() => setScreen('recipes')} class={flex flex-col items-center ${screen === 'recipes' ? 'text-indigo-600 font-semibold' : 'text-slate-400 hover:text-slate-600'}}>Рецепты<button onClick={() => alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')} class="flex flex-col items-center text-slate-400 hover:text-slate-600">Семья{/* MODAL WINDOW */}{isModalOpen && (Добавить продуктНазвание продукта<inputtype="text"value={newName}onChange={(e) => setNewName(e.target.value)}placeholder="Например: Молоко, Сыр, Томаты"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/>Количество<inputtype="number"value={newQty}onChange={(e) => setNewQty(parseInt(e.target.value) || 1)}min="1"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/>Полка<selectvalue={newShelf}onChange={(e) => setNewShelf(e.target.value)}class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500">ВерхняяСредняяНижняяДверцаСрок годности (дней)<inputtype="number"value={newDays}onChange={(e) => setNewDays(parseInt(e.target.value) || 0)}min="0"class="w-full border border-slate-200 rounded-lg p-2.5 focus:outline-none focus:border-indigo-500"/><button onClick={() => setIsModalOpen(false)} class="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium rounded-lg text-sm">ОтменаДобавить)});}// --- Карточка продукта ---function ProductCard({ item, onClick, isGrouped }) {const isExpiring = item.daysLeft <= 1;return (<divonClick={onClick}class={product-card relative flex flex-col items-center bg-white border border-slate-200 rounded-xl p-2 cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 w-16 group transition-all ${isExpiring ? "bg-rose-50 border-rose-300" : ""}}>{getEmoji(item.name)}{item.name}{item.qty > 1 && isGrouped && ({item.qty})}<span class={text-[8px] mt-0.5 font-semibold ${isExpiring ? "text-rose-600 font-bold" : "text-slate-400"}}>{item.daysLeft} дн.);}// --- Отрендерить приложение в корневой div (Замена main.tsx) ---const rootElement = document.getElementById('root');if (rootElement) {const root = ReactDOM.createRoot(rootElement);root.render();}
