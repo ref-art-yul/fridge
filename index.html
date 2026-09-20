@@ -1102,31 +1102,38 @@
             const draggedProductIndex = products.findIndex(p => p.id === productId);
             if (draggedProductIndex === -1) return;
 
+            // Запоминаем текущий перетаскиваемый продукт
             const draggedProduct = products[draggedProductIndex];
             
             saveState();
 
-            // Проверяем, был ли сброс выполнен поверх конкретной карточки продукта
-            const targetCard = event.target.closest('.product-card');
+            // ЧЁТКАЯ ПРАВКА ДЛЯ МОБИЛЬНЫХ: Определяем элемент под пальцем в момент сброса
+            let targetCard = event.target.closest('.product-card');
+            if (!targetCard && event.changedTouches && event.changedTouches.length > 0) {
+                const touch = event.changedTouches[0];
+                const elementAtTouch = document.elementFromPoint(touch.clientX, touch.clientY);
+                if (elementAtTouch) targetCard = elementAtTouch.closest('.product-card');
+            }
+
             let targetItemId = null;
             if (targetCard) {
                 targetItemId = parseInt(targetCard.getAttribute('data-id'));
             }
 
-            // Проверяем, есть ли идентичный товар с ТАКИМ ЖЕ сроком годности на целевой полке для объединения
+            // Ищем дубликат: строго по имени, целевой полке и СОВПАДАЮЩЕЙ дате создания (или сроку)
             const duplicateIndex = products.findIndex(p => 
                 p.id !== productId &&
                 p.name.toLowerCase().trim() === draggedProduct.name.toLowerCase().trim() && 
                 p.shelf === targetShelf &&
-                p.daysLeft === draggedProduct.daysLeft
+                p.createdAt === draggedProduct.createdAt // Объединяем, только если это абсолютно одинаковые партии
             );
 
             if (duplicateIndex !== -1) {
-                // Если такой товар нашелся — просто суммируем количество, как и раньше
+                // Если бросили на точно такую же партию — просто суммируем количество
                 products[duplicateIndex].qty += draggedProduct.qty;
                 products.splice(draggedProductIndex, 1);
             } else {
-                // ИНАЧЕ: Меняем полку и выстраиваем точный порядковый номер
+                // ИНАЧЕ: Переносим на новую полку, ЖЕСТКО сохраняя все временные метки продукта!
                 draggedProduct.shelf = targetShelf;
                 
                 // Вырезаем элемент из старого места в массиве
@@ -1141,11 +1148,12 @@
                         products.push(draggedProduct);
                     }
                 } else {
-                    // Если бросили просто на пустую область полки — отправляем в самый конец списка этой полки
+                    // Если бросили просто на пустую область полки — отправляем в самый конец
                     products.push(draggedProduct);
                 }
             }
 
+            // Сохраняем и перерисовываем
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
             render();
         }
