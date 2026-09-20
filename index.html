@@ -317,14 +317,14 @@
                 
                 <!-- Поле срока хранения перенесено строго вниз -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
-                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней)</label>
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней осталось)</label>
                     <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2.35rem; box-sizing: border-box; overflow: hidden; width: 100%;">
-                        <!-- Кнопка Минус -->
-                        <button onclick="changeAddDaysBtn(-1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
+                        <!-- Кнопка Минус (ИСПРАВЛЕНО НА changeDetailsDaysBtn) -->
+                        <button onclick="changeDetailsDaysBtn(-1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
                         <!-- Чистый инпут по центру -->
                         <input type="number" id="detailsDays" class="details-days-input" min="0" style="flex: 1; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; outline: none; padding: 0; margin: 0;">
-                        <!-- Кнопка Плюс -->
-                        <button onclick="changeAddDaysBtn(1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
+                        <!-- Кнопка Плюс (ИСПРАВЛЕНО НА changeDetailsDaysBtn) -->
+                        <button onclick="changeDetailsDaysBtn(1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
                     </div>
                 </div>
                 
