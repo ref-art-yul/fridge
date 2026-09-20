@@ -799,6 +799,11 @@
             }
 
             // Иначе плюс открывает добавление продукта в холодильник
+            
+            // ЧЁТКАЯ ПРАВКА: Принудительно ставим 5 дней при каждом открытии окна
+            const daysInput = document.getElementById('prodDays');
+            if (daysInput) daysInput.value = '5';
+            
             document.getElementById('addProductModal').classList.remove('hidden'); 
             selectShelfRadio(groups[0]?.shelves[0] || 'Верхняя полка');
             setTimeout(() => {
