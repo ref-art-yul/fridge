@@ -657,12 +657,19 @@
                 card.onclick = () => openEditRecipeModal(recipe.id);
                 card.style.cursor = 'pointer'; // Делаем карточку явно кликабельной
                 card.className = `recipe-card ${canCook ? 'recipe-cookable' : ''}`;
-                let ingredientsHTML = ingStatus.map(ing => `
-                    <div class="ingredient-row">
-                        <span class="${ing.ok ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
-                        <span class="isEnough ? 'ing-status-ok' : 'ing-status-missing'">{isEnough ? '✓' : `Мало (есть ${totalInFridge})`}</span>
-                    </div>
-                `).join('');
+                let ingredientsHTML = ingStatus.map(ing => {
+                    const totalInFridge = products
+                        .filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim())
+                        .reduce((sum, p) => sum + p.qty, 0);
+                    const isEnough = totalInFridge >= ing.qty;
+
+                    return `
+                        <div class="ingredient-row">
+                            <span class="${isEnough ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
+                            <span class="${isEnough ? 'ing-status-ok' : 'ing-status-missing'}">${isEnough ? '✓' : 'Мало (есть ' + totalInFridge + ')'}</span>
+                        </div>
+                    `;
+                }).join('');
 
                 card.innerHTML = `
                     <div class="recipe-header">
