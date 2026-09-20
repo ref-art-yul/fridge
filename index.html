@@ -7,9 +7,9 @@
     <style>
     /* Встраиваем базовые стили приложения прямо в файл, чтобы не зависеть от серверов */
     body {
-        /* Адаптивное поведение шапки на ПК и мобильных устройствах */
+        /* Адаптивное поведение шапки на ПК (блоки облегают контент) и мобильных устройствах */
         .adaptive-sort-select { width: 13rem; flex-grow: 0; }
-        .header-filter-block { flex-grow: 1; flex-shrink: 0; }
+        .header-filter-block { flex-grow: 0; flex-shrink: 0; display: flex; align-items: center; gap: 0.5rem; }
         
         @media (max-width: 540px) {
             /* На мобильных экранах Блок 2 (фильтры) падает вниз и растягивается на всю ширину */
