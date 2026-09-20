@@ -989,6 +989,24 @@
             input.value = currentVal;
         }
 
+        function changeAddDaysBtn(direction) {
+            const input = document.getElementById('prodDays');
+            if (!input) return;
+            let currentVal = parseInt(input.value) || 0;
+            currentVal += direction;
+            if (currentVal < 0) currentVal = 0; // Срок не может быть меньше нуля
+            input.value = currentVal;
+        }
+
+        function changeDetailsDaysBtn(direction) {
+            const input = document.getElementById('detailsDays');
+            if (!input) return;
+            let currentVal = parseInt(input.value) || 0;
+            currentVal += direction;
+            if (currentVal < 0) currentVal = 0;
+            input.value = currentVal;
+        }
+
         function changeAddQtyBtn(direction) {
             const input = document.getElementById('prodQty');
             if (!input) return;
