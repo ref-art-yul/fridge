@@ -2417,7 +2417,7 @@
 
                     console.log("Фото успешно сжато! Размер в Base64:", base64Data.length, "символов.");
 
-                                        // ПЕРЕХОД К ЭТАПУ 3: Передаем чистую Base64-строку в функцию запроса к OpenRouter
+                    // ПЕРЕХОД К ЭТАПУ 3: Передаем чистую Base64-строку в функцию запроса к OpenRouter
                     sendImageToGemini(base64Data);
                 };
                 img.src = event.target.result;
@@ -2444,7 +2444,7 @@
 
             try {
                 // Делаем запрос к универсальному хабу OpenRouter с подстраховкой заголовков
-                const response = await fetch('https://openrouter.ai', {
+                const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
