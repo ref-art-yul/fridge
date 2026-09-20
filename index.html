@@ -652,20 +652,43 @@
         function cookRecipe(recipeId) {
             const recipe = recipesDatabase.find(r => r.id === recipeId);
             if (!recipe) return;
+
+            // Сохраняем состояние для возможности отмены через Undo (Ctrl+Z)
             saveState();
+
+            // Идём по каждому ингредиенту в рецепте
             recipe.ingredients.forEach(ing => {
-                let needed = ing.qty;
+                let neededQty = ing.qty; // Сколько штук нам нужно списать
+                const targetName = ing.name.toLowerCase().trim();
+
+                // Пробегаемся по продуктам в холодильнике и списываем их
                 for (let i = 0; i < products.length; i++) {
-                    if (products[i].name.toLowerCase().trim() === ing.name.toLowerCase().trim()) {
-                        if (products[i].qty >= needed) { products[i].qty -= needed; needed = 0; } 
-                        else { needed -= products[i].qty; products[i].qty = 0; }
+                    if (products[i].name.toLowerCase().trim() === targetName) {
+                        if (products[i].qty > neededQty) {
+                            // Если на полке лежит БОЛЬШЕ, чем нужно для рецепта — просто уменьшаем количество
+                            products[i].qty -= neededQty;
+                            neededQty = 0;
+                        } else {
+                            // Если на полке лежит МЕНЬШЕ или РОВНО столько, сколько нужно — забираем всё под ноль
+                            neededQty -= products[i].qty;
+                            products[i].qty = 0;
+                        }
                     }
-                    if (needed === 0) break;
+                    // Если мы полностью набрали нужное количество ингредиента, переходим к следующему
+                    if (neededQty === 0) break;
                 }
             });
+
+            // Полностью удаляем из холодильника карточки тех продуктов, у которых количество стало 0
             products = products.filter(p => p.qty > 0);
+
+            // Сохраняем обновленный массив в локальную память телефона
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
-            alert(`Успешно приготовлено! Продукты удалены с полок.`);
+            
+            // Выводим красивое уведомление
+            alert(`Блюдо "${recipe.title}" успешно приготовлено! Продукты автоматически списаны с полок.`);
+            
+            // Мгновенно обновляем интерфейс
             render();
         }
 
