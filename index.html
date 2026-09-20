@@ -9,11 +9,18 @@
     body {
         /* Адаптивное поведение шапки на ПК и мобильных устройствах */
         .adaptive-sort-select { width: 13rem; flex-grow: 0; }
+        .header-filter-block { flex-grow: 1; flex-shrink: 0; }
         
         @media (max-width: 540px) {
-            .header-control-block { justify-content: space-between !important; width: 100% !important; }
-            .adaptive-sort-select { width: 100% !important; flex-grow: 1 !important; }
+            /* На мобильных экранах Блок 2 (фильтры) падает вниз и растягивается на всю ширину */
+            .header-filter-block { width: 100% !important; justify-content: space-between !important; order: 3 !important; }
+            .adaptive-sort-select { width: 100% !important; flex-grow: 1 !important; max-width: none !important; }
+            
+            /* Блок 1 (название) и Блок Истории остаются сверху и делят первую строчку */
+            .header-title-block { flex-grow: 1 !important; order: 1 !important; }
+            .header-history-block { order: 2 !important; }
         }
+
         /* Убираем дефолтные стрелочки у всех input type="number" */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -110,30 +117,29 @@
     <div class="app-container">
         
         <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-        <!-- Обновленная адаптивная двухблочная шапка на Flexbox -->
-            <header style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1rem; position: fixed; top: 0; width: 100%; max-width: 960px; z-index: 100; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 3.5rem;">
+        <!-- Обновленная адаптивная шапка с динамическим изменением порядка элементов -->
+            <header style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.5rem 1rem; position: fixed; top: 0; width: 100%; max-width: 960px; z-index: 100; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; height: auto !important; min-height: 3.5rem;">
                 
-                <!-- БЛОК 1: Название экрана (с новым эмодзи ❄️) -->
-                <div style="display: flex; align-items: center; flex-grow: 1; min-width: 12rem;">
+                <!-- БЛОК 1: Название экрана ❄️ -->
+                <div class="header-title-block" style="display: flex; align-items: center; flex: 1; min-width: 10rem; order: 1;">
                     <h1 id="appTitle" style="font-size: 1.125rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.35rem;">
                         <span>❄️</span> Холодильник
                     </h1>
                 </div>
 
-                <!-- БЛОК 2: Объединенная группа управления (История + Сортировка + Настройки) -->
-                <div id="filterBar" class="header-control-block" style="display: flex; align-items: center; gap: 0.5rem; flex-grow: 1; min-width: 16rem; justify-content: flex-end;">
-                    
-                    <!-- Кнопки истории (Undo/Redo) перенесены сюда и прижаты вплотную к фильтру -->
-                    <div style="display: flex; gap: 0.15rem; align-items: center; flex-shrink: 0;">
-                        <button onclick="undo()" id="undoBtn" class="history-btn opacity-50" disabled style="padding: 0.35rem; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Отменить действие (Ctrl+Z)">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
-                        </button>
-                        <button onclick="redo()" id="redoBtn" class="history-btn opacity-50" disabled style="padding: 0.35rem; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Повторить действие (Ctrl+Y)">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
-                        </button>
-                    </div>
+                <!-- БЛОК ИСТОРИИ: Кнопки отмены (Undo/Redo) с динамическим порядком order -->
+                <div class="header-history-block" style="display: flex; gap: 0.15rem; align-items: center; flex-shrink: 0; order: 2;">
+                    <button onclick="undo()" id="undoBtn" class="history-btn opacity-50" disabled style="padding: 0.35rem; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Отменить действие (Ctrl+Z)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
+                    </button>
+                    <button onclick="redo()" id="redoBtn" class="history-btn opacity-50" disabled style="padding: 0.35rem; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Повторить действие (Ctrl+Y)">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
+                    </button>
+                </div>
 
-                    <!-- Выпадашка сортировки с новым адаптивным классом -->
+                <!-- БЛОК 2: Элементы фильтрации и настроек -->
+                <div class="header-filter-block" style="display: flex; align-items: center; gap: 0.5rem; order: 3; justify-content: flex-end;">
+                    <!-- Выпадашка сортировки -->
                     <select id="sortSelect" class="adaptive-sort-select" onchange="setSortMode(this.value)" style="border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.85rem; font-weight: 500; color: #475569; background-color: #f1f5f9; outline: none; cursor: pointer;">
                         <option value="classic">По расположению</option>
                         <option value="expiry">По сроку годности ⌛</option>
@@ -141,7 +147,7 @@
                         <option value="alpha">По алфавиту 🔤</option>
                     </select>
 
-                    <!-- Кнопка настроек -->
+                    <!-- Кнопка настроек полок -->
                     <button onclick="openSettingsModal()" id="tab-settings" class="tab-btn tab-inactive" style="display: flex; align-items: center; justify-content: center; padding: 0.4rem 0.5rem; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; color: #475569; flex-shrink: 0;" title="Настройка полок">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
