@@ -1289,33 +1289,25 @@
             const recipeModal = document.getElementById('addRecipeModal');
             const editRecModal = document.getElementById('editRecipeModal');
             
-            // Находим все три контейнера подсказок
-            const prodSugs = document.getElementById('customSuggestions');
-            const recAddSugs = document.getElementById('recipeAddSuggestions');
-            const recEditSugs = document.getElementById('recipeEditSuggestions');
-
-            const isProdSugsOpen = prodSugs && !prodSugs.classList.contains('hidden');
-            const isRecAddSugsOpen = recAddSugs && !recAddSugs.classList.contains('hidden');
-            const isRecEditSugsOpen = recEditSugs && !recEditSugs.classList.contains('hidden');
-
-            // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ (ХОЛОДИЛЬНИК И РЕЦЕПТЫ) ---
             // Находим все четыре контейнера подсказок
-            const prodSugs = document.getElementById('customSuggestions');
-            const prodDetailsSugs = document.getElementById('productDetailsSuggestions');
-            const recAddSugs = document.getElementById('recipeAddSuggestions');
-            const recEditSugs = document.getElementById('recipeEditSuggestions');
+            const sProd = document.getElementById('customSuggestions');
+            const sDetails = document.getElementById('productDetailsSuggestions');
+            const sRecAdd = document.getElementById('recipeAddSuggestions');
+            const sRecEdit = document.getElementById('recipeEditSuggestions');
 
-            const isProdSugsOpen = prodSugs && !prodSugs.classList.contains('hidden');
-            const isProdDetailsSugsOpen = prodDetailsSugs && !prodDetailsSugs.classList.contains('hidden');
-            const isRecAddSugsOpen = recAddSugs && !recAddSugs.classList.contains('hidden');
-            const isRecEditSugsOpen = recEditSugs && !recEditSugs.classList.contains('hidden');
+            const isOpenProd = sProd && !sProd.classList.contains('hidden');
+            const isOpenDetails = sDetails && !sDetails.classList.contains('hidden');
+            const isOpenRecAdd = sRecAdd && !sRecAdd.classList.contains('hidden');
+            const isOpenRecEdit = sRecEdit && !sRecEdit.classList.contains('hidden');
 
-            if ((isProdSugsOpen || isProdDetailsSugsOpen || isRecAddSugsOpen || isRecEditSugsOpen) && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
-                let activeContainer = prodSugs;
+            // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ ---
+            if ((isOpenProd || isOpenDetails || isOpenRecAdd || isOpenRecEdit) && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
+                let activeContainer = sProd;
                 let activeContainerId = 'customSuggestions';
-                if (isProdDetailsSugsOpen) { activeContainer = prodDetailsSugs; activeContainerId = 'productDetailsSuggestions'; }
-                if (isRecAddSugsOpen) { activeContainer = recAddSugs; activeContainerId = 'recipeAddSuggestions'; }
-                if (isRecEditSugsOpen) { activeContainer = recEditSugs; activeContainerId = 'recipeEditSuggestions'; }
+                
+                if (isOpenDetails) { activeContainer = sDetails; activeContainerId = 'productDetailsSuggestions'; }
+                if (isOpenRecAdd) { activeContainer = sRecAdd; activeContainerId = 'recipeAddSuggestions'; }
+                if (isOpenRecEdit) { activeContainer = sRecEdit; activeContainerId = 'recipeEditSuggestions'; }
 
                 const items = activeContainer.querySelectorAll('div');
                 
@@ -1335,7 +1327,7 @@
                     if (event.key === 'Enter') {
                         if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
                             event.preventDefault();
-                            items[currentSuggestionIndex].click(); // Автозаполнение поля кликом
+                            items[currentSuggestionIndex].click(); // Выбираем пункт
                             return;
                         }
                     }
