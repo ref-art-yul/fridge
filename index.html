@@ -809,15 +809,31 @@
                 card.style.cursor = 'pointer'; // Делаем карточку явно кликабельной
                 card.className = `recipe-card ${canCook ? 'recipe-cookable' : ''}`;
                 let ingredientsHTML = ingStatus.map(ing => {
-                    const totalInFridge = products
-                        .filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim())
-                        .reduce((sum, p) => sum + p.qty, 0);
+                    // Фильтруем все карточки этого продукта в холодильнике
+                    const matchedProducts = products.filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim());
+                    
+                    // Считаем общее количество продукта
+                    const totalInFridge = matchedProducts.reduce((sum, p) => sum + p.qty, 0);
+                    
+                    // Считаем, сколько из них уже испорчено (срок 0 или меньше дней)
+                    const spoiledQty = matchedProducts.filter(p => p.daysLeft <= 0).reduce((sum, p) => sum + p.qty, 0);
+                    
                     const isEnough = totalInFridge >= ing.qty;
 
+                    // Настраиваем надпись предупреждения о просрочке
+                    let spoiledText = '';
+                    if (spoiledQty > 0) {
+                        spoiledText = ' <span style="color: #ef4444; font-weight: 700; font-size: 0.75rem; background-color: #fef2f2; padding: 0.1rem 0.3rem; border-radius: 0.25rem; border: 1px solid #fca5a5; margin-left: 0.35rem;">испорчено ' + spoiledQty + ' шт.</span>';
+                    }
+
                     return `
-                        <div class="ingredient-row">
-                            <span class="${isEnough ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
-                            <span class="${isEnough ? 'ing-status-ok' : 'ing-status-missing'}">${isEnough ? '✓' : 'Мало (есть ' + totalInFridge + ')'}</span>
+                        <div class="ingredient-row" style="display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; padding: 0.25rem 0;">
+                            <span class="${isEnough ? 'ing-name-ok' : 'ing-name-missing'}" style="font-size: 0.85rem;">
+                                ${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)${spoiledText}
+                            </span>
+                            <span class="${isEnough ? 'ing-status-ok' : 'ing-status-missing'}" style="font-size: 0.85rem; font-weight: 700;">
+                                ${isEnough ? '✓' : 'Мало (есть ' + totalInFridge + ')'}
+                            </span>
                         </div>
                     `;
                 }).join('');
