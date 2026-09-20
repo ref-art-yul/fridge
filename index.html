@@ -905,7 +905,8 @@
             container.classList.remove('hidden');
 
             // Сдвигаем контейнер подсказок по высоте в зависимости от того, где находится инпут
-            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight) + 'px';
+            // ЧЁТКАЯ ПРАВКА: Корректируем высоту, убирая лишний внутренний отступ строки
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight - 20) + 'px';
 
             filtered.forEach(item => {
                 const div = document.createElement('div');
@@ -944,7 +945,8 @@
             container.innerHTML = '';
             container.classList.remove('hidden');
 
-            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight) + 'px';
+            // ЧЁТКАЯ ПРАВКА: Корректируем высоту в окне редактирования рецепта
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight - 20) + 'px';
 
             filtered.forEach(item => {
                 const div = document.createElement('div');
