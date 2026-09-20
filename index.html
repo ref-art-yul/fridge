@@ -7,6 +7,13 @@
     <style>
     /* Встраиваем базовые стили приложения прямо в файл, чтобы не зависеть от серверов */
     body {
+        /* Адаптивное поведение шапки на ПК и мобильных устройствах */
+        .adaptive-sort-select { width: 13rem; flex-grow: 0; }
+        
+        @media (max-width: 540px) {
+            .header-control-block { justify-content: space-between !important; width: 100% !important; }
+            .adaptive-sort-select { width: 100% !important; flex-grow: 1 !important; }
+        }
         /* Убираем дефолтные стрелочки у всех input type="number" */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -106,14 +113,18 @@
         <!-- Обновленная адаптивная двухблочная шапка на Flexbox -->
             <header style="background-color: #ffffff; border-bottom: 1px solid #e2e8f0; padding: 0.75rem 1rem; position: fixed; top: 0; width: 100%; max-width: 960px; z-index: 100; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem; min-height: 3.5rem;">
                 
-                <!-- БЛОК 1: Название экрана и кнопки отмены действий (Undo/Redo) -->
-                <div style="display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex: 1; min-width: 16rem;">
+                <!-- БЛОК 1: Название экрана (с новым эмодзи ❄️) -->
+                <div style="display: flex; align-items: center; flex-grow: 1; min-width: 12rem;">
                     <h1 id="appTitle" style="font-size: 1.125rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.35rem;">
-                        <span>🥛</span> Холодильник
+                        <span>❄️</span> Холодильник
                     </h1>
+                </div>
+
+                <!-- БЛОК 2: Объединенная группа управления (История + Сортировка + Настройки) -->
+                <div id="filterBar" class="header-control-block" style="display: flex; align-items: center; gap: 0.5rem; flex-grow: 1; min-width: 16rem; justify-content: flex-end;">
                     
-                    <!-- Кнопки истории (Undo/Redo), которые были добавлены ранее -->
-                    <div style="display: flex; gap: 0.25rem; align-items: center;">
+                    <!-- Кнопки истории (Undo/Redo) перенесены сюда и прижаты вплотную к фильтру -->
+                    <div style="display: flex; gap: 0.15rem; align-items: center; flex-shrink: 0;">
                         <button onclick="undo()" id="undoBtn" class="history-btn opacity-50" disabled style="padding: 0.35rem; background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Отменить действие (Ctrl+Z)">
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>
                         </button>
@@ -121,20 +132,17 @@
                             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"></path><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3l3 2.7"></path></svg>
                         </button>
                     </div>
-                </div>
 
-                <!-- БЛОК 2: Фильтр-сортировка и кнопка шестерёнки настроек -->
-                <div id="filterBar" style="display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex: 1; min-width: 16rem;">
-                    <!-- Выпадашка сортировки -->
-                    <select id="sortSelect" onchange="setSortMode(this.value)" style="flex: 1; max-width: 13rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.85rem; font-weight: 500; color: #475569; background-color: #f1f5f9; outline: none; cursor: pointer;">
+                    <!-- Выпадашка сортировки с новым адаптивным классом -->
+                    <select id="sortSelect" class="adaptive-sort-select" onchange="setSortMode(this.value)" style="border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.85rem; font-weight: 500; color: #475569; background-color: #f1f5f9; outline: none; cursor: pointer;">
                         <option value="classic">По расположению</option>
                         <option value="expiry">По сроку годности ⌛</option>
                         <option value="newest">По дате добавления 🆕</option>
                         <option value="alpha">По алфавиту 🔤</option>
                     </select>
 
-                    <!-- Кнопка глобальных настроек полок -->
-                    <button onclick="openSettingsModal()" id="tab-settings" class="tab-btn tab-inactive" style="display: flex; align-items: center; justify-content: center; padding: 0.4rem 0.5rem; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; color: #475569;" title="Настройка полок">
+                    <!-- Кнопка настроек -->
+                    <button onclick="openSettingsModal()" id="tab-settings" class="tab-btn tab-inactive" style="display: flex; align-items: center; justify-content: center; padding: 0.4rem 0.5rem; background-color: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 0.5rem; cursor: pointer; color: #475569; flex-shrink: 0;" title="Настройка полок">
                         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                             <circle cx="12" cy="12" r="3"></circle>
                             <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
