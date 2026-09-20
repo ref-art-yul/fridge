@@ -377,16 +377,16 @@
                     <div id="shelfRadioContainer" style="display: flex; flex-wrap: wrap; gap: 0.5rem; width: 100%;"></div>
                 </div>
                 
-                <!-- Поле срока хранения перенесено строго вниз -->
+                <!-- Блок срока годности с кнопками минус и плюс -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
-                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней осталось)</label>
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Срок годности (дней)</label>
                     <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2.35rem; box-sizing: border-box; overflow: hidden; width: 100%;">
                         <!-- Кнопка Минус -->
-                        <button onclick="changeDetailsDaysBtn(-1)" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
-                        <!-- Чистый инпут по центру -->
-                        <input type="number" id="detailsDays" min="0" style="flex: 1; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; outline: none; padding: 0; margin: 0;">
+                        <button onclick="changeAddDaysBtn(-1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
+                        <!-- Чистый инпут по центру со стартовым значением 5 -->
+                        <input type="number" id="prodDays" value="5" min="0" style="flex: 1; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; outline: none; padding: 0; margin: 0;">
                         <!-- Кнопка Плюс -->
-                        <button onclick="changeDetailsDaysBtn(1)" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
+                        <button onclick="changeAddDaysBtn(1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
                     </div>
                 </div>
                 
@@ -403,10 +403,10 @@
     <!-- АВТОНОМНЫЙ СКРИПТ ЛОГИКИ -->
     <script>
         const emojiMap = {
-            'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
-            'яблоко': '🍎', 'яблоки': '🍎', 'банан': '🍌', 'бананы': '🍌', 'колбаса': '🥩', 'мясо': '🥩',
+            'молоко': '🥛', 'сыр': '🧀', 'яйца': '🥚', 'яйцо': '🥚', 'томаты': '🍅', 'помидор': '🍅', 'помидоры': '🍅',
+            'яблоко': '🍎', 'яблоки': '🍎', 'банан': '🍌', 'бананы': '🍌', 'колбаса': '🥩', 'мясо': '🥩', 'свинина': '🥩', 'говядина': '🥩',
             'рыба': '🐟', 'огурец': '🥒', 'огурцы': '🥒', 'лимон': '🍋', 'хлеб': '🍞', 'соус': '🥫', 'кетчуп': '🥫',
-            'масло': '🧈', 'йогурт': '🍦', 'пиво': '🍺', 'вино': '🍷', 'сок': '🧃'
+            'масло': '🧈', 'мороженое': '🍦', 'пиво': '🍺', 'вино': '🍷', 'сок': '🧃'
         };
 
         const getEmoji = (name) => {
@@ -804,6 +804,14 @@
             const daysInput = document.getElementById('prodDays');
             if (daysInput) daysInput.value = '5';
             
+            // ПРИНУДИТЕЛЬНОЕ UX-ИСПРАВЛЕНИЕ: Гарантируем появление цифры 5 при открытии окна
+            setTimeout(() => {
+                const daysInp = document.getElementById('prodDays');
+                if (daysInp) {
+                    daysInp.value = '5';
+                }
+            }, 10);
+
             document.getElementById('addProductModal').classList.remove('hidden'); 
             selectShelfRadio(groups[0]?.shelves[0] || 'Верхняя полка');
             setTimeout(() => {
