@@ -631,30 +631,30 @@
             const navRecipes = document.getElementById('navRecipes');
             const navProfile = document.getElementById('navProfile');
 
-            // Сбрасываем стили у всех кнопок навигации
+            // Сбрасываем стили у всех кнопок навигации в нижнем меню
             [navFridge, navRecipes, navProfile].forEach(btn => {
                 if (btn) { btn.className = "nav-btn nav-inactive"; }
             });
 
             if (screen === 'fridge') {
-                title.innerHTML = '<span>❄️</span> Холодильник';
-                filterBar.classList.remove('hidden');
-                addBtn.classList.remove('hidden');
+                if (title) title.innerHTML = '<span>❄️</span> Холодильник';
+                if (filterBar) filterBar.classList.remove('hidden'); // Безопасный вызов
+                if (addBtn) addBtn.classList.remove('hidden');
                 if (navFridge) navFridge.className = "nav-btn nav-active";
             } else if (screen === 'recipes') {
-                title.innerHTML = '<span>📖</span> Книга рецептов';
-                filterBar.classList.add('hidden');
-                addBtn.classList.remove('hidden');
+                if (title) title.innerHTML = '<span>📖</span> Книга рецептов';
+                if (filterBar) filterBar.classList.add('hidden');    // Безопасный вызов
+                if (addBtn) addBtn.classList.remove('hidden');
                 if (navRecipes) navRecipes.className = "nav-btn nav-active";
             } else if (screen === 'profile') {
-                title.innerHTML = '<span>👤</span> База продуктов';
-                filterBar.classList.add('hidden');
-                addBtn.classList.add('hidden'); // Скрываем плюс в профиле
+                if (title) title.innerHTML = '<span>👤</span> База продуктов';
+                if (filterBar) filterBar.classList.add('hidden');    // Безопасный вызов
+                if (addBtn) addBtn.classList.add('hidden'); // Скрываем синий плюс в профиле
                 if (navProfile) navProfile.className = "nav-btn nav-active";
             } else if (screen === 'settings') {
-                title.innerHTML = '<span>⚙️</span> Настройка полок';
-                filterBar.classList.add('hidden');
-                addBtn.classList.add('hidden');
+                if (title) title.innerHTML = '<span>⚙️</span> Настройка полок';
+                if (filterBar) filterBar.classList.add('hidden');    // Безопасный вызов
+                if (addBtn) addBtn.classList.add('hidden');
             }
             render();
         }
