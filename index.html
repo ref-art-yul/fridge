@@ -150,6 +150,46 @@
             </button>
         </footer>
 
+        <!-- МОДАЛЬНОЕ ОКНО РЕДАКТИРОВАНИЯ РЕЦЕПТА -->
+        <div id="editRecipeModal" class="modal-overlay hidden">
+            <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin: 0; color: #0f172a;">Редактировать рецепт</h3>
+                    <span style="font-size: 1.5rem;">📖</span>
+                </div>
+                
+                <!-- Изменение Названия -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название блюда</label>
+                    <input type="text" id="editRecName" class="form-input" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                </div>
+
+                <!-- Контейнер для динамического списка ингредиентов -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
+                    <div id="editRecipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
+                    
+                    <button onclick="addIngredientRowToEditForm()" style="width: 100%; padding: 0.4rem; background-color: transparent; color: #4f46e5; border: 1px dashed #4f46e5; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Добавить ингредиент</button>
+                </div>
+                
+                <!-- НИЖНИЙ РЯД КНОПОК ПО СТАНДАРТУ: Корзинка слева, Отмена и Сохранить справа -->
+                <div style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 1rem; width: 100%;">
+                    <button onclick="deleteRecipeFromDetails()" style="padding: 0.5rem; background-color: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-right: 2rem; transition: opacity 0.15s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'" title="Удалить рецепт полностью">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M3 6h18"></path>
+                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                        </svg>
+                    </button>
+                    
+                    <div style="display: flex; gap: 0.5rem; flex-grow: 1; justify-content: flex-end;">
+                        <button onclick="closeEditRecipeModal()" class="btn-cancel" style="padding: 0.625rem 1.25rem; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Отмена</button>
+                        <button onclick="saveEditRecipeDetails()" class="btn-submit" style="padding: 0.625rem 1.5rem; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.85rem;">Сохранить</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ РЕЦЕПТА -->
         <div id="addRecipeModal" class="modal-overlay hidden">
             <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
@@ -530,6 +570,8 @@
                 });
 
                 const card = document.createElement('div');
+                card.onclick = () => openEditRecipeModal(recipe.id);
+                card.style.cursor = 'pointer'; // Делаем карточку явно кликабельной
                 card.className = `recipe-card ${canCook ? 'recipe-cookable' : ''}`;
                 let ingredientsHTML = ingStatus.map(ing => `
                     <div class="ingredient-row">
@@ -860,30 +902,25 @@
                 const detailsModal = document.getElementById('productDetailsModal');
                 const settingsModal = document.getElementById('settingsShelfModal');
                 const recipeModal = document.getElementById('addRecipeModal');
+                const editRecModal = document.getElementById('editRecipeModal');
                 
                 if (addModal && !addModal.classList.contains('hidden')) closeModal();
                 if (detailsModal && !detailsModal.classList.contains('hidden')) closeProductDetailsModal();
                 if (settingsModal && !settingsModal.classList.contains('hidden')) closeSettingsModal();
                 if (recipeModal && !recipeModal.classList.contains('hidden')) closeAddRecipeModal();
+                if (editRecModal && !editRecModal.classList.contains('hidden')) closeEditRecipeModal();
             }
             
             if (event.key === 'Enter') {
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
                 const recipeModal = document.getElementById('addRecipeModal');
+                const editRecModal = document.getElementById('editRecipeModal');
                 
-                if (addModal && !addModal.classList.contains('hidden')) {
-                    event.preventDefault();
-                    addProduct();
-                }
-                if (detailsModal && !detailsModal.classList.contains('hidden')) {
-                    event.preventDefault();
-                    saveProductDetails();
-                }
-                if (recipeModal && !recipeModal.classList.contains('hidden')) {
-                    event.preventDefault();
-                    saveCustomRecipe();
-                }
+                if (addModal && !addModal.classList.contains('hidden')) { event.preventDefault(); addProduct(); }
+                if (detailsModal && !detailsModal.classList.contains('hidden')) { event.preventDefault(); saveProductDetails(); }
+                if (recipeModal && !recipeModal.classList.contains('hidden')) { event.preventDefault(); saveCustomRecipe(); }
+                if (editRecModal && !editRecModal.classList.contains('hidden')) { event.preventDefault(); saveEditRecipeDetails(); }
             }
         });
 
@@ -892,11 +929,13 @@
             const detailsModal = document.getElementById('productDetailsModal');
             const settingsModal = document.getElementById('settingsShelfModal');
             const recipeModal = document.getElementById('addRecipeModal');
+            const editRecModal = document.getElementById('editRecipeModal');
             
             if (event.target === addModal) closeModal();
             if (event.target === detailsModal) closeProductDetailsModal();
             if (event.target === settingsModal) closeSettingsModal();
             if (event.target === recipeModal) closeAddRecipeModal();
+            if (event.target === editRecModal) closeEditRecipeModal();
         });
 
         // АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ КНОПОК ПОЛОК ДЛЯ ОКНА ДОБАВЛЕНИЯ И РЕДАКТИРОВАНИЯ
@@ -1351,6 +1390,104 @@
             // Сохраняем базу в память смартфона и обновляем интерфейс
             localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
             closeAddRecipeModal();
+            render();
+        }
+
+        let activeEditingRecipeId = null;
+
+        function openEditRecipeModal(id) {
+            const recipe = recipesDatabase.find(r => r.id === id);
+            if (!recipe) return;
+
+            activeEditingRecipeId = id;
+            document.getElementById('editRecName').value = recipe.title;
+            
+            const container = document.getElementById('editRecipeIngredientsListContainer');
+            if (container) {
+                container.innerHTML = '';
+                recipe.ingredients.forEach(ing => {
+                    addIngredientRowToEditForm(ing.name, ing.qty);
+                });
+            }
+
+            document.getElementById('editRecipeModal').classList.remove('hidden');
+        }
+
+        function closeEditRecipeModal() {
+            document.getElementById('editRecipeModal').classList.add('hidden');
+            activeEditingRecipeId = null;
+        }
+
+        function addIngredientRowToEditForm(name = '', qty = 1) {
+            const container = document.getElementById('editRecipeIngredientsListContainer');
+            if (!container) return;
+
+            const row = document.createElement('div');
+            row.className = 'form-ingredient-row-edit';
+            row.style.display = 'flex';
+            row.style.gap = '0.5rem';
+            row.style.alignItems = 'center';
+            row.style.width = '100%';
+
+            row.innerHTML = `
+                <input type="text" placeholder="Ингредиент" value="${name}" class="form-input edit-rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
+                <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2rem; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
+                    <button onclick="let inp = this.nextElementSibling; let v = parseInt(inp.value)||1; if(v>1) inp.value=v-1;" style="width: 1.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer;">−</button>
+                    <input type="number" value="${qty}" min="1" class="edit-rec-ing-qty" style="width: 2rem; height: 100%; border: none; text-align: center; font-size: 0.8rem; font-weight: 600; color: #334155; outline: none; -moz-appearance: textfield;">
+                    <button onclick="let inp = this.previousElementSibling; let v = parseInt(inp.value)||1; inp.value=v+1;" style="width: 1.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer;">+</button>
+                </div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 0.25rem 0.5rem;" title="Удалить ингредиент">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveEditRecipeDetails() {
+            if (activeEditingRecipeId === null) return;
+            const recipe = recipesDatabase.find(r => r.id === activeEditingRecipeId);
+            if (!recipe) return;
+
+            const titleInput = document.getElementById('editRecName');
+            let rawTitle = titleInput.value.trim();
+            if (!rawTitle) return alert('Название блюда не может быть пустым!');
+
+            const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
+            const rows = document.querySelectorAll('.form-ingredient-row-edit');
+            const ingredients = [];
+
+            rows.forEach(row => {
+                const nameInp = row.querySelector('.edit-rec-ing-name');
+                const qtyInp = row.querySelector('.edit-rec-ing-qty');
+                
+                if (nameInp && qtyInp) {
+                    let rawIngName = nameInp.value.trim();
+                    let ingQty = parseInt(qtyInp.value) || 1;
+                    
+                    if (rawIngName) {
+                        const ingName = rawIngName.charAt(0).toUpperCase() + rawIngName.slice(1);
+                        ingredients.push({ name: ingName, qty: ingQty });
+                    }
+                }
+            });
+
+            if (ingredients.length === 0) {
+                return alert('Добавьте хотя бы один ингредиент к рецепту!');
+            }
+
+            recipe.title = title;
+            recipe.ingredients = ingredients;
+
+            localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
+            closeEditRecipeModal();
+            render();
+        }
+
+        function deleteRecipeFromDetails() {
+            if (activeEditingRecipeId === null) return;
+            if (!confirm('Вы действительно хотите удалить этот рецепт?')) return;
+
+            recipesDatabase = recipesDatabase.filter(r => r.id !== activeEditingRecipeId);
+            localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
+            closeEditRecipeModal();
             render();
         }
 
