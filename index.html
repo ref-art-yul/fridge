@@ -2453,16 +2453,19 @@
                         'X-Title': 'Fridge App'               // Название вашего приложения для OpenRouter
                     },
                     body: JSON.stringify({
-                        model: 'google/gemini-2.5-flash:free', // Переключаемся на более стабильную бесплатную Vision-модель
+                        model: "google/gemini-2.5-flash:free", 
                         messages: [
                             {
-                                role: 'user',
+                                role: "user",
                                 content: [
-                                    { type: 'text', text: systemPrompt },
+                                    { 
+                                        type: "text", 
+                                        text: systemPrompt 
+                                    },
                                     {
-                                        type: 'image_url',
+                                        type: "image_url",
                                         image_url: {
-                                            url: 'data:image/jpeg;base64,' + base64ImageText
+                                            url: "data:image/jpeg;base64," + base64ImageText
                                         }
                                     }
                                 ]
