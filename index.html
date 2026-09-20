@@ -559,12 +559,14 @@
             card.draggable = true;
             card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.id); };
 
-            // КЛИК ТЕПЕРЬ ОТКРЫВАЕТ ДЕТАЛЬНУЮ КАРТОЧКУ
+            // ЧЁТКАЯ ПРАВКА: Запоминаем ID карточки, над которой ведут перетаскивание, для точной сортировки внутри полки
+            card.setAttribute('data-id', item.id);
+
             card.onclick = () => openProductDetailsModal(item.id);
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 && isGrouped ? `<span class="product-badge">${item.qty}</span>` : ''}
+                ${item.qty > 1 && isGrouped ? `<span class="product-badge">\${item.qty}</span>` : ''}
                 <span class="product-days ${isExpiring ? 'text-rose' : ''}">${item.daysLeft} дн.</span>
             `;
             return card;
@@ -783,26 +785,46 @@
 
             const draggedProduct = products[draggedProductIndex];
             
-            // Если полка не поменялась, ничего не делаем
-            if (draggedProduct.shelf === targetShelf) return;
-
             saveState();
 
-            // ЧЁТКАЯ ПРАВКА: При перетаскивании объединяем только если совпадает имя И срок годности
-            const targetProductIndex = products.findIndex(p => 
+            // Проверяем, был ли сброс выполнен поверх конкретной карточки продукта
+            const targetCard = event.target.closest('.product-card');
+            let targetItemId = null;
+            if (targetCard) {
+                targetItemId = parseInt(targetCard.getAttribute('data-id'));
+            }
+
+            // Проверяем, есть ли идентичный товар с ТАКИМ ЖЕ сроком годности на целевой полке для объединения
+            const duplicateIndex = products.findIndex(p => 
+                p.id !== productId &&
                 p.name.toLowerCase().trim() === draggedProduct.name.toLowerCase().trim() && 
                 p.shelf === targetShelf &&
                 p.daysLeft === draggedProduct.daysLeft
             );
 
-            if (targetProductIndex !== -1) {
-                // Если есть, суммируем количество
-                products[targetProductIndex].qty += draggedProduct.qty;
-                // Удаляем старую карточку из старого места
+            if (duplicateIndex !== -1) {
+                // Если такой товар нашелся — просто суммируем количество, как и раньше
+                products[duplicateIndex].qty += draggedProduct.qty;
                 products.splice(draggedProductIndex, 1);
             } else {
-                // Если нет, просто меняем полку у текущего продукта
+                // ИНАЧЕ: Меняем полку и выстраиваем точный порядковый номер
                 draggedProduct.shelf = targetShelf;
+                
+                // Вырезаем элемент из старого места в массиве
+                products.splice(draggedProductIndex, 1);
+
+                if (targetItemId && !isNaN(targetItemId)) {
+                    // Если бросили на конкретный продукт — находим его индекс и вставляем прямо перед ним
+                    let insertIndex = products.findIndex(p => p.id === targetItemId);
+                    if (insertIndex !== -1) {
+                        products.splice(insertIndex, 0, draggedProduct);
+                    } else {
+                        products.push(draggedProduct);
+                    }
+                } else {
+                    // Если бросили просто на пустую область полки — отправляем в самый конец списка этой полки
+                    products.push(draggedProduct);
+                }
             }
 
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
