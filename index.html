@@ -1173,7 +1173,7 @@
         }
 
         function changeDetailsDaysBtn(direction) {
-            const input = document.querySelector('.details-days-input');
+            const input = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
             if (!input) return;
             let currentVal = parseInt(input.value);
             if (isNaN(currentVal)) currentVal = 0;
@@ -1210,7 +1210,9 @@
             document.getElementById('detailsEmoji').textContent = getEmoji(product.name);
             document.getElementById('detailsName').value = product.name;
             document.getElementById('detailsQty').value = product.qty;
-            document.getElementById('detailsDays').value = product.daysLeft;
+            // ЧЁТКАЯ ПРАВКА: Заполняем поле срока при открытии карточки с защитой от сбоев ID
+            const detailsDaysInp = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
+            if (detailsDaysInp) detailsDaysInp.value = product.daysLeft;
             
             // Включаем подсветку текущей полки товара
             changeDetailsShelf(product.shelf);
