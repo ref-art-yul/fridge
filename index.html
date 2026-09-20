@@ -2440,8 +2440,8 @@
                 "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
 
             try {
-                // Делаем ПРЯМОЙ fetch-запрос к официальному ИИ-шлюзу Groq Vision
-                const response = await fetch('https://groq.com', {
+                // Отправляем запрос через специальный POST-шлюз CORS-прокси напрямую в Groq API без ВПН и блокировок
+                const response = await fetch('https://allorigins.win' + encodeURIComponent('https://groq.com'), {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
