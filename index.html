@@ -638,15 +638,15 @@
                 let canCook = true;
                 let missingIngredients = 0;
                 const ingStatus = recipe.ingredients.map(ing => {
-                    // ЧЁТКАЯ ПРАВКА: Считаем суммарное количество продукта по ВСЕМ карточкам в холодильнике
+                    // ИСПРАВЛЕННЫЙ ВАРИАНТ: Считаем сумму без дублирования переменных
                     const totalInFridge = products
                         .filter(p => p.name.toLowerCase().trim() === ing.name.toLowerCase().trim())
                         .reduce((sum, p) => sum + p.qty, 0);
                     
-                    const hasEnough = totalInFridge >= ing.qty;
-                    if (!hasEnough) { canCook = false; missingIngredients++; }
+                    const isEnough = totalInFridge >= ing.qty;
+                    if (!isEnough) { canCook = false; missingIngredients++; }
                     
-                    return { ...ing, available: totalInFridge, ok: hasEnough };
+                    return { ...ing, available: totalInFridge, ok: isEnough };
                     
                     const hasEnough = inFridge >= ing.qty;
                     if (!hasEnough) { canCook = false; missingIngredients++; }
@@ -660,7 +660,7 @@
                 let ingredientsHTML = ingStatus.map(ing => `
                     <div class="ingredient-row">
                         <span class="${ing.ok ? 'ing-name-ok' : 'ing-name-missing'}">${getEmoji(ing.name)} ${ing.name} (${ing.qty} шт.)</span>
-                        <span class="\({ing.ok ? 'ing-status-ok' : 'ing-status-missing'}">\){ing.ok ? '✓' : `Мало (есть ${ing.available})`}</span>
+                        <span class="isEnough ? 'ing-status-ok' : 'ing-status-missing'">{isEnough ? '✓' : `Мало (есть ${totalInFridge})`}</span>
                     </div>
                 `).join('');
 
