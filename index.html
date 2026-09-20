@@ -302,7 +302,6 @@
                         <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название</label>
                         <!-- Плавающий контейнер подсказок для окна редактирования продукта -->
                         <div id="productDetailsSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 13.5rem; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 1.85rem; box-sizing: border-box;"></div>
-                        <span id="detailsEmoji" style="font-size: 1.5rem; flex-shrink: 0; min-width: 2rem; text-align: center;">🍏</span>
                         <input type="text" id="detailsName" oninput="showProductDetailsSuggestions(this.value, this)" onclick="showProductDetailsSuggestions(this.value, this)" class="form-input" style="width: 100% !important; display: block !important;">
                     </div>
                     
@@ -1233,9 +1232,6 @@
             activeEditingProductId = id;
             
             // Заполняем поля текущими значениями продукта
-            // ЧЁТКАЯ ПРАВКА: Ищем элемент эмодзи с защитой от сбоев в HTML
-            const emojiEl = document.getElementById('detailsEmoji') || document.querySelector('[id$="detailsEmoji"]');
-            if (emojiEl) emojiEl.textContent = getEmoji(product.name);
             document.getElementById('detailsName').value = product.name;
             document.getElementById('detailsQty').value = product.qty;
             // ЧЁТКАЯ ПРАВКА: Заполняем поле срока при открытии карточки с защитой от сбоев ID
