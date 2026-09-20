@@ -2368,7 +2368,7 @@
         // Запускаем автоматическую смену каждые 2.5 секунды (2500 мс)
         setInterval(animatePlaceholdersLoop, 2500);
 
-        // ЭТАП 1: Обработка сделанного снимка с камеры
+        // ЭТАП 2: Сжатие фотографии и перевод в текстовый формат Base64
         function handleCameraFile(inputElement) {
             if (!inputElement.files || inputElement.files.length === 0) return;
             
@@ -2378,14 +2378,57 @@
             const aiModal = document.getElementById('aiLoadingModal');
             if (aiModal) aiModal.classList.remove('hidden');
 
-            console.log("Фотография успешно получена:", file.name, file.size, "байт");
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    // Создаем виртуальный холст для сжатия
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800;
+                    const MAX_HEIGHT = 800;
+                    let width = img.width;
+                    let height = img.height;
 
-            // ВРЕМЕННАЯ ЗАГЛУШКА ДЛЯ ТЕСТА: имитируем работу нейросети 3 секунды и закрываем окно
-            setTimeout(() => {
-                if (aiModal) aiModal.classList.add('hidden');
-                inputElement.value = ''; // Очищаем инпут камеры для следующего снимка
-                alert("Этап 1 успешно пройден! Интерфейс камеры работает, картинка поймана скриптом.");
-            }, 3000);
+                    // Рассчитываем пропорциональное уменьшение сторон
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+
+                    // Отрисовываем уменьшенную картинку на холсте
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Сжимаем качество до 70% и получаем чистую строку Base64
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    
+                    // Отсекаем технический заголовок "data:image/jpeg;base64,", оставляя только тело строки для ИИ
+                    const base64Data = dataUrl.split(',')[1];
+
+                    console.log("Фото успешно сжато! Размер в Base64:", base64Data.length, "символов.");
+
+                    // ПЕРЕХОД К ЭТАПУ 3: Временно вызываем алерт-подтверждение
+                    setTimeout(() => {
+                        if (aiModal) aiModal.classList.add('hidden');
+                        inputElement.value = '';
+                        alert("Этап 2 пройден! Картинка успешно сжата до " + width + "x" + height + " и готова к отправке в ИИ.");
+                        
+                        // Сюда на следующем шаге мы вставим: sendImageToGemini(base64Data);
+                    }, 1500);
+                };
+                img.src = event.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         render();
