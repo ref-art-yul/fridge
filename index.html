@@ -469,9 +469,6 @@
         // Переводим каталог на структуру объектов (Имя + Эмодзи)
         let userCatalog = JSON.parse(localStorage.getItem('user_products_catalog')) || [
             { name: 'Молоко', emoji: '🥛' },
-            { name: 'Кефир', emoji: '🥛' },
-            { name: 'Ряженка', emoji: '🥛' },
-            { name: 'Сливки', emoji: '🥛' },
             { name: 'Томаты', emoji: '🍅' },
             { name: 'Сыр', emoji: '🧀' },
             { name: 'Яйцо', emoji: '🥚' },
@@ -479,6 +476,10 @@
             { name: 'Кетчуп', emoji: '🥫' },
             { name: 'Хлеб', emoji: '🍞' },
             { name: 'Огурец', emoji: '🥒' },
+            { name: 'Яблоко', emoji: '🍏' },
+            { name: 'Апельсин', emoji: '🍊' },
+            { name: 'Рыба', emoji: '🐟' },
+            { name: 'Банан', emoji: '🍌' }
         ];
 
         function addToCatalog(name) {
