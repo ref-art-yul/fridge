@@ -2439,8 +2439,15 @@
                 });
 
                 if (!response.ok) {
+                    // Вычитываем JSON-ошибку, которую нам прислал сервер Vercel
                     const errData = await response.json().catch(() => ({}));
-                    throw new Error(errData.error || 'Ошибка бэкенда Vercel');
+                    
+                    // Создаем умный объект ошибки и прикрепляем к нему скрытые детали с сервера
+                    const serverError = new Error(errData.error || 'Ошибка бэкенда Vercel');
+                    if (errData.details) {
+                        serverError.details = errData.details;
+                    }
+                    throw serverError;
                 }
 
                 // Получаем чистый готовый массив продуктов от нашего сервера
