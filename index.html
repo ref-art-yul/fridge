@@ -187,6 +187,8 @@
                 <!-- Контейнер для динамического списка ингредиентов -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
+                    <!-- Плавающий контейнер подсказок для окна редактирования рецепта -->
+                    <div id="recipeEditSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.5rem;"></div>
                     <div id="editRecipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
                     
                     <button onclick="addIngredientRowToEditForm()" style="width: 100%; padding: 0.4rem; background-color: transparent; color: #4f46e5; border: 1px dashed #4f46e5; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Добавить ингредиент</button>
@@ -227,6 +229,8 @@
                 <!-- Контейнер для списка ингредиентов -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
+                    <!-- Плавающий контейнер подсказок для окна создания рецепта -->
+                    <div id="recipeAddSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.5rem;"></div>
                     <div id="recipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
                     
                     <!-- Кнопка добавления строчки ингредиента -->
@@ -880,6 +884,88 @@
             });
         }
 
+        // Глобальные ссылки на активные инпуты ингредиентов, которые сейчас редактируются
+        let activeRecipeAddInput = null;
+        let activeRecipeEditInput = null;
+
+        function showRecipeAddSuggestions(value, inputElement) {
+            const container = document.getElementById('recipeAddSuggestions');
+            if (!container) return;
+            
+            activeRecipeAddInput = inputElement;
+            currentSuggestionIndex = -1; // Сбрасываем клавиатурный индекс
+            
+            const searchStr = value.toLowerCase().trim();
+            if (searchStr.length === 0) { container.classList.add('hidden'); return; }
+            
+            const filtered = userCatalog.filter(item => item.name.toLowerCase().includes(searchStr));
+            if (filtered.length === 0) { container.classList.add('hidden'); return; }
+            
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            // Сдвигаем контейнер подсказок по высоте в зависимости от того, где находится инпут
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight) + 'px';
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.textContent = item.emoji + ' ' + item.name;
+                div.style.padding = '0.5rem 0.75rem';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '0.875rem';
+                div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
+                div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                div.onclick = () => {
+                    inputElement.value = item.name;
+                    container.classList.add('hidden');
+                    validateRecipeIngredients('form-ingredient-row', 'rec-ing-name'); // Запускаем проверку дубликатов
+                    
+                    // Переводим фокус на инпут количества этой же строки
+                    const qtyInp = inputElement.parentElement.querySelector('.rec-ing-qty');
+                    if (qtyInp) qtyInp.focus();
+                };
+                container.appendChild(div);
+            });
+        }
+
+        function showRecipeEditSuggestions(value, inputElement) {
+            const container = document.getElementById('recipeEditSuggestions');
+            if (!container) return;
+            
+            activeRecipeEditInput = inputElement;
+            currentSuggestionIndex = -1;
+            
+            const searchStr = value.toLowerCase().trim();
+            if (searchStr.length === 0) { container.classList.add('hidden'); return; }
+            
+            const filtered = userCatalog.filter(item => item.name.toLowerCase().includes(searchStr));
+            if (filtered.length === 0) { container.classList.add('hidden'); return; }
+            
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight) + 'px';
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.textContent = item.emoji + ' ' + item.name;
+                div.style.padding = '0.5rem 0.75rem';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '0.875rem';
+                div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
+                div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                div.onclick = () => {
+                    inputElement.value = item.name;
+                    container.classList.add('hidden');
+                    validateRecipeIngredients('form-ingredient-row-edit', 'edit-rec-ing-name');
+                    
+                    const qtyInp = inputElement.parentElement.querySelector('.edit-rec-ing-qty');
+                    if (qtyInp) qtyInp.focus();
+                };
+                container.appendChild(div);
+            });
+        }
+
         function showSuggestions(value) {
             currentSuggestionIndex = -1;
             const container = document.getElementById('customSuggestions');
@@ -1157,32 +1243,42 @@
             const recipeModal = document.getElementById('addRecipeModal');
             const editRecModal = document.getElementById('editRecipeModal');
             
-            // Находим контейнер подсказок
-            const suggestionsContainer = document.getElementById('customSuggestions');
-            const isSuggestionsOpen = suggestionsContainer && !suggestionsContainer.classList.contains('hidden');
+            // Находим все три контейнера подсказок
+            const prodSugs = document.getElementById('customSuggestions');
+            const recAddSugs = document.getElementById('recipeAddSuggestions');
+            const recEditSugs = document.getElementById('recipeEditSuggestions');
 
-            // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ ---
-            if (isSuggestionsOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
-                const items = suggestionsContainer.querySelectorAll('div');
+            const isProdSugsOpen = prodSugs && !prodSugs.classList.contains('hidden');
+            const isRecAddSugsOpen = recAddSugs && !recAddSugs.classList.contains('hidden');
+            const isRecEditSugsOpen = recEditSugs && !recEditSugs.classList.contains('hidden');
+
+            // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ (ХОЛОДИЛЬНИК И РЕЦЕПТЫ) ---
+            if ((isProdSugsOpen || isRecAddSugsOpen || isRecEditSugsOpen) && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
+                // Определяем, какой именно контейнер сейчас активен
+                let activeContainer = prodSugs;
+                let activeContainerId = 'customSuggestions';
+                if (isRecAddSugsOpen) { activeContainer = recAddSugs; activeContainerId = 'recipeAddSuggestions'; }
+                if (isRecEditSugsOpen) { activeContainer = recEditSugs; activeContainerId = 'recipeEditSuggestions'; }
+
+                const items = activeContainer.querySelectorAll('div');
                 
                 if (items.length > 0) {
                     if (event.key === 'ArrowDown') {
                         event.preventDefault();
                         currentSuggestionIndex++;
-                        highlightSuggestion('customSuggestions');
+                        highlightSuggestion(activeContainerId);
                         return;
                     }
                     if (event.key === 'ArrowUp') {
                         event.preventDefault();
                         currentSuggestionIndex--;
-                        highlightSuggestion('customSuggestions');
+                        highlightSuggestion(activeContainerId);
                         return;
                     }
                     if (event.key === 'Enter') {
-                        // Если пользователь выбрал пункт стрелочками — применяем его
                         if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
                             event.preventDefault();
-                            items[currentSuggestionIndex].click(); // Эмулируем клик для заполнения поля
+                            items[currentSuggestionIndex].click(); // Автозаполнение поля кликом
                             return;
                         }
                     }
@@ -1637,6 +1733,7 @@
 
         function closeAddRecipeModal() {
             document.getElementById('addRecipeModal').classList.add('hidden');
+            document.getElementById('recipeAddSuggestions').classList.add('hidden');
         }
 
         function addIngredientRowToForm() {
@@ -1651,7 +1748,7 @@
             row.style.width = '100%';
 
             row.innerHTML = `
-                <input type="text" placeholder="Ингредиент" oninput="validateRecipeIngredients('form-ingredient-row', 'rec-ing-name')" class="form-input rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
+                <input type="text" placeholder="Ингредиент" oninput="validateRecipeIngredients('form-ingredient-row', 'rec-ing-name'); showRecipeAddSuggestions(this.value, this);" onclick="showRecipeAddSuggestions(this.value, this);" class="form-input rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
                 <!-- Консистентный счетчик количества с кнопками плюс и минус -->
                 <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2rem; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <button onclick="let inp = this.nextElementSibling; let v = parseInt(inp.value)||1; if(v>1) inp.value=v-1;" style="width: 1.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer;">−</button>
@@ -1774,6 +1871,7 @@
 
         function closeEditRecipeModal() {
             document.getElementById('editRecipeModal').classList.add('hidden');
+            document.getElementById('recipeEditSuggestions').classList.add('hidden');
             activeEditingRecipeId = null;
         }
 
@@ -1789,7 +1887,7 @@
             row.style.width = '100%';
 
             row.innerHTML = `
-                <input type="text" placeholder="Ингредиент" oninput="validateRecipeIngredients('form-ingredient-row-edit', 'edit-rec-ing-name')" value="${name}" class="form-input edit-rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
+                <input type="text" placeholder="Ингредиент" oninput="validateRecipeIngredients('form-ingredient-row-edit', 'edit-rec-ing-name'); showRecipeEditSuggestions(this.value, this);" onclick="showRecipeEditSuggestions(this.value, this);" value="${name}" class="form-input edit-rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
                 <div style="display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 0.5rem; background: #ffffff; height: 2rem; box-sizing: border-box; overflow: hidden; flex-shrink: 0;">
                     <button onclick="let inp = this.nextElementSibling; let v = parseInt(inp.value)||1; if(v>1) inp.value=v-1;" style="width: 1.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1rem; font-weight: 600; color: #64748b; cursor: pointer;">−</button>
                     <input type="number" value="${qty}" min="1" class="edit-rec-ing-qty" style="width: 2rem; height: 100%; border: none; text-align: center; font-size: 0.8rem; font-weight: 600; color: #334155; outline: none; -moz-appearance: textfield;">
