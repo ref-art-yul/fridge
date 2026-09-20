@@ -2495,7 +2495,12 @@
 
             } catch (error) {
                 console.error("Критический сбой ИИ-модуля Vercel:", error);
-                alert("⚠️ " + error.message + ". Повторите попытку через пару секунд.");
+                // Проверяем, передал ли нам сервер подробные детали ошибки
+                let displayError = error.message;
+                if (error.details) {
+                    displayError += "\nДетали: " + error.details;
+                }
+                alert("⚠️ " + displayError);
             } finally {
                 if (aiModal) aiModal.classList.add('hidden');
                 const camInp = document.getElementById('cameraInput');
