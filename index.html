@@ -484,30 +484,30 @@
         
         // Переводим каталог на структуру объектов (Имя + Эмодзи)
         let userCatalog = JSON.parse(localStorage.getItem('user_products_catalog')) || [
-            { name: 'Молоко', emoji: '🥛' },
-            { name: 'Томаты', emoji: '🍅' },
-            { name: 'Сыр', emoji: '🧀' },
-            { name: 'Яйцо', emoji: '🥚' },
-            { name: 'Соус', emoji: '🥫' },
-            { name: 'Кетчуп', emoji: '🥫' },
-            { name: 'Хлеб', emoji: '🍞' },
-            { name: 'Огурец', emoji: '🥒' },
-            { name: 'Яблоко', emoji: '🍏' },
-            { name: 'Апельсин', emoji: '🍊' },
-            { name: 'Рыба', emoji: '🐟' },
-            { name: 'Банан', emoji: '🍌' }
+            { name: 'Молоко', emoji: '🥛', defaultDays: 3 },
+            { name: 'Томаты', emoji: '🍅', defaultDays: 7 },
+            { name: 'Сыр', emoji: '🧀', defaultDays: 5 },
+            { name: 'Яйцо', emoji: '🥚', defaultDays: 12 },
+            { name: 'Соус', emoji: '🥫', defaultDays: 30 },
+            { name: 'Кетчуп', emoji: '🥫', defaultDays: 30 },
+            { name: 'Хлеб', emoji: '🍞', defaultDays: 4 },
+            { name: 'Огурец', emoji: '🥒', defaultDays: 6 },
+            { name: 'Яблоко', emoji: '🍏', defaultDays: 10 },
+            { name: 'Апельсин', emoji: '🍊', defaultDays: 10 },
+            { name: 'Рыба', emoji: '🐟', defaultDays: 3 },
+            { name: 'Банан', emoji: '🍌', defaultDays: 10 },
         ];
 
         function addToCatalog(name) {
             const cleanName = name.charAt(0).toUpperCase() + name.slice(1).trim();
             if (!cleanName) return;
             
-            // Проверяем, есть ли уже продукт с таким именем в базе
             const exists = userCatalog.some(item => item.name.toLowerCase() === cleanName.toLowerCase());
             if (!exists) {
                 userCatalog.push({
                     name: cleanName,
-                    emoji: getEmoji(cleanName) // Берем базовый эмодзи из авто-карты
+                    emoji: getEmoji(cleanName),
+                    defaultDays: 5 // Для новых уникальных продуктов по умолчанию ставим 5 дней
                 });
                 userCatalog.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
                 localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
@@ -1122,6 +1122,12 @@
                 div.onclick = () => {
                     document.getElementById('prodName').value = item.name;
                     container.classList.add('hidden');
+                    
+                    // УМНАЯ ПОДСТАНОВКА: Ищем дефолтные дни выбранного товара и мгновенно пишем их в инпут срока годности
+                    const daysInput = document.getElementById('prodDays');
+                    if (daysInput) {
+                        daysInput.value = item.defaultDays !== undefined ? item.defaultDays : 5;
+                    }
                 };
                 container.appendChild(div);
             });
@@ -1144,6 +1150,11 @@
             const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
 
             if (!name) return alert('Напишите название продукта!');
+            // Если пользователь ввел точное имя из базы руками, подхватываем его дефолтные дни перед записью
+            const matchedCatalog = userCatalog.find(c => c.name.toLowerCase().trim() === rawName.toLowerCase().trim());
+            if (matchedCatalog && matchedCatalog.defaultDays !== undefined) {
+                daysLeft = matchedCatalog.defaultDays;
+            }
             saveState();
             
             // ЧЁТКАЯ ПРАВКА: Ищем совпадение по имени, полке И сроку годности одновременно
@@ -2156,10 +2167,16 @@
                 item.style.gap = '0.5rem';
 
                 item.innerHTML = `
-                    <!-- Активное инпут-поле для изменения эмодзи с жесткой валидацией -->
-                    <input type="text" value="${catalogItem.emoji}" oninput="validateAndChangeEmoji(${index}, this)" style="width: 2.2rem; height: 2.2rem; text-align: center; font-size: 1.25rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #ffffff; padding: 0; box-sizing: border-box; flex-shrink: 0; cursor: pointer;" title="Изменить эмодзи продукта">
+                    <input type="text" value="${catalogItem.emoji}" oninput="validateAndChangeEmoji(${index}, this)" style="width: 2.2rem; height: 2.2rem; text-align: center; font-size: 1.25rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #ffffff; padding: 0; box-sizing: border-box; flex-shrink: 0; cursor: pointer;">
                     <input type="text" value="${catalogItem.name}" onchange="globalRenameCatalogItem(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; flex-grow: 1; background: #f8fafc; font-weight: 500; min-width: 0; color: #334155;">
-                    <button onclick="globalDeleteCatalogItem(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить из глобальной базы">✕</button>
+                    
+                    <!-- Новое компактное поле для настройки дней по умолчанию -->
+                    <div style="display: flex; align-items: center; gap: 0.15rem; flex-shrink: 0;">
+                        <input type="number" value="${catalogItem.defaultDays || 5}" min="0" onchange="globalChangeCatalogDays(${index}, this.value)" style="width: 2.5rem; border: 1px solid #cbd5e1; padding: 0.35rem 0.25rem; font-size: 0.8rem; border-radius: 0.375rem; text-align: center; font-weight: 600; color: #475569; background: #ffffff;">
+                        <span style="font-size: 0.7rem; color: #94a3b8; font-weight: 600;">дн</span>
+                    </div>
+
+                    <button onclick="globalDeleteCatalogItem(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;">✕</button>
                 `;
                 listContainer.appendChild(item);
             });
@@ -2192,6 +2209,15 @@
                 // Если пользователь ввёл буквы, цифры или символы — стираем ввод и возвращаем прошлый эмодзи
                 inputElement.value = userCatalog[index].emoji;
             }
+        }
+
+        function globalChangeCatalogDays(index, value) {
+            let days = parseInt(value);
+            if (isNaN(days) || days < 0) days = 5;
+            
+            userCatalog[index].defaultDays = days;
+            localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
+            render();
         }
 
         // ГЛОБАЛЬНОЕ ПЕРЕИМЕНОВАНИЕ ВО ВСЕМ ПРИЛОЖЕНИИ
