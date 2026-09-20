@@ -2430,8 +2430,9 @@
             const aiModal = document.getElementById('aiLoadingModal');
             
             try {
-                // Браузер отправляет POST запрос на относительный путь своего же домена
-                const response = await fetch('/api/scan', {
+                // Умная пересылка: если мы на GitHub Pages, отправляем фото на бэкенд Vercel, иначе шлём по относительному пути
+                const apiUrl = window.location.hostname.includes('github.io') ? 'https://vercel.app' : '/api/scan';
+                const response = await fetch(apiUrl, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ image: base64ImageText }) // Передаем картинку в теле запроса
