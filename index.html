@@ -322,7 +322,7 @@
                         <!-- Кнопка Минус -->
                         <button onclick="changeAddDaysBtn(-1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">−</button>
                         <!-- Чистый инпут по центру -->
-                        <input type="number" id="detailsDays" value="5" min="0" style="flex: 1; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; outline: none; padding: 0; margin: 0;">
+                        <input type="number" id="detailsDays" class="details-days-input" min="0" style="flex: 1; height: 100%; border: none; text-align: center; font-size: 0.875rem; font-weight: 600; color: #334155; outline: none; padding: 0; margin: 0;">
                         <!-- Кнопка Плюс -->
                         <button onclick="changeAddDaysBtn(1)" type="button" style="width: 3.5rem; height: 100%; background: #f8fafc; border: none; font-size: 1.1rem; font-weight: 600; color: #64748b; cursor: pointer; transition: background 0.1s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='#f8fafc'">+</button>
                     </div>
@@ -1168,32 +1168,15 @@
             if (!input) return;
             let currentVal = parseInt(input.value) || 0;
             currentVal += direction;
-            if (currentVal < 0) currentVal = 0; // Срок не может быть отрицательным
-            input.value = currentVal;
-        }
-
-        function changeDetailsDaysBtn(direction) {
-            const input = document.getElementById('detailsDays');
-            if (!input) return;
-            let currentVal = parseInt(input.value) || 0;
-            currentVal += direction;
-            if (currentVal < 0) currentVal = 0;
-            input.value = currentVal;
-        }
-
-        function changeAddDaysBtn(direction) {
-            const input = document.getElementById('prodDays');
-            if (!input) return;
-            let currentVal = parseInt(input.value) || 0;
-            currentVal += direction;
             if (currentVal < 0) currentVal = 0; // Срок не может быть меньше нуля
             input.value = currentVal;
         }
 
         function changeDetailsDaysBtn(direction) {
-            const input = document.getElementById('detailsDays');
+            const input = document.querySelector('.details-days-input');
             if (!input) return;
-            let currentVal = parseInt(input.value) || 0;
+            let currentVal = parseInt(input.value);
+            if (isNaN(currentVal)) currentVal = 0;
             currentVal += direction;
             if (currentVal < 0) currentVal = 0;
             input.value = currentVal;
@@ -1267,16 +1250,26 @@
             const nameInput = document.getElementById('detailsName').value.trim();
             if (!nameInput) return alert('Название не может быть пустым!');
 
-            saveState();
+            // Находим инпут дней по классу для 100% защиты на мобильных
+            const daysInp = document.querySelector('.details-days-input');
+            if (!daysInp) return alert('Ошибка: Поле ввода срока не найдено. Перезагрузите страницу.');
 
-            // Автоматически делаем первую букву заглавной
+            const newDays = parseInt(daysInp.value);
+            if (isNaN(newDays)) return alert('Введите корректное число дней!');
+
+            saveState();
+            
             product.name = nameInput.charAt(0).toUpperCase() + nameInput.slice(1);
             product.qty = parseInt(document.getElementById('detailsQty').value) || 1;
-            const newDays = parseInt(document.getElementById('detailsDays').value) || 0;
-            product.initialDays = newDays;
-            product.daysLeft = newDays;
-            product.createdAt = Date.now(); // Сбрасываем таймер на текущую секунду
             product.shelf = detailsSelectedShelf;
+
+            // ЧЁТКАЯ ПРАВКА: Если срок годности НЕ менялся, мы бережно храним старую дату добавления,
+            // а если пользователь ввёл новую цифру дней — обновляем точку отсчета таймера
+            if (product.daysLeft !== newDays) {
+                product.initialDays = newDays;
+                product.daysLeft = newDays;
+                product.createdAt = Date.now(); 
+            }
 
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
             closeProductDetailsModal();
