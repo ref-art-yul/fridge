@@ -33,6 +33,7 @@ export default async function handler(request, response) {
 
         // БРОНЕБОЙНЫЙ СПИСОК БЕСПЛАТНЫХ VISION-МОДЕЛЕЙ (Перебираются сверху вниз до первого успеха)
         const modelsToTry = [
+            "openai/gpt-4o",
             "meta-llama/llama-3.2-90b-vision-instruct:free",
             "google/gemini-1.5-flash:free",
             "google/gemini-2.5-flash:free",
