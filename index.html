@@ -83,6 +83,8 @@
         .form-group { margin-bottom: 1rem; display: flex; flex-direction: column; width: 100%; box-sizing: border-box; }
         .form-label { display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem; }
         .form-input, .form-select { w-full; width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem; }
+        /* Осветляем цвет плейсхолдера, чтобы он не путался с введенным текстом */
+        .form-input::placeholder { color: #cbd5e1; opacity: 1; }
         .form-input:focus, .form-select:focus { outline: none; border-color: #4f46e5; }
         .form-row { display: flex; flex-direction: column; gap: 0rem; width: 100%; }
         .form-actions { display: flex; gap: 0.75rem; margin-top: 1.5rem; }
@@ -221,7 +223,7 @@
                 <!-- Название рецепта -->
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название блюда</label>
-                    <input type="text" id="recName" placeholder="Например: Яичница с томатами" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                    <input type="text" id="recName" placeholder="Яичница с томатами" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                 </div>
 
                 <!-- Контейнер для списка ингредиентов -->
@@ -357,7 +359,7 @@
                     <!-- Поле Названия (занимает всё свободное место) -->
                     <div style="position: relative; display: flex !important; flex-direction: column !important; flex: 1; align-items: flex-start !important;">
                         <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название продукта</label>
-                        <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Например: Молоко, Сыр, Томаты" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                        <input type="text" id="prodName" oninput="showSuggestions(this.value)" onclick="showSuggestions(this.value)" placeholder="Молоко" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
                         <div id="customSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 100%; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.62rem; left: 0;"></div>
                     </div>
                     
@@ -2160,6 +2162,30 @@
                 localStorage.setItem('my_fridge_items', JSON.stringify(products));
             }
         }
+
+        // АНИМАЦИЯ ПЛЕЙСХОЛДЕРОВ: Массивы сменяющихся подсказок
+        const foodPlaceholders = ['Молоко', 'Сыр', 'Томаты', 'Яйца', 'Соус', 'Огурец', 'Хлеб', 'Рыба', 'Йогурт', 'Масло'];
+        const recipePlaceholders = ['Яичница с томатами', 'Классический омлет', 'Свежий салат', 'Бутерброд с сыром', 'Грибной суп'];
+        
+        let currentPlaceholderIdx = 0;
+
+        function animatePlaceholdersLoop() {
+            currentPlaceholderIdx = (currentPlaceholderIdx + 1) % foodPlaceholders.length;
+            
+            const prodInput = document.getElementById('prodName');
+            const recInput = document.getElementById('recName');
+            
+            // Динамически меняем плейсхолдеры, если элементы есть на странице
+            if (prodInput) {
+                prodInput.placeholder = foodPlaceholders[currentPlaceholderIdx];
+            }
+            if (recInput) {
+                recInput.placeholder = recipePlaceholders[currentPlaceholderIdx % recipePlaceholders.length];
+            }
+        }
+
+        // Запускаем автоматическую смену каждые 2.5 секунды (2500 мс)
+        setInterval(animatePlaceholdersLoop, 2500);
 
         render();
     </script>
