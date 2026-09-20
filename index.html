@@ -530,6 +530,9 @@
         // Настройки дней для окрашивания (по умолчанию 1 и 3)
         let expiryRedDays = parseInt(localStorage.getItem('my_fridge_red_days')) || 1;
         let expiryOrangeDays = parseInt(localStorage.getItem('my_fridge_orange_days')) || 3;
+        // Полноценные массивы для хранения истории действий (Отмена / Повтор)
+        let undoStack = [];
+        let redoStack = [];
         let currentScreen = 'fridge';
         let currentMode = 'classic';
         let historyUndo = [];
@@ -558,6 +561,48 @@
             products = JSON.parse(historyRedo.pop());
             updateHistoryButtons();
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            render();
+        }
+
+        // Функция сохранения текущего слепка холодильника перед изменением
+        function saveState() {
+            if (!products) return;
+            // Делаем глубокий снимок текущего массива продуктов и отправляем в стопку отмены
+            undoStack.push(JSON.stringify(products));
+            // При новом действии пользователя стопка "Вперед" (Повторить) всегда очищается
+            redoStack = [];
+            updateHistoryButtons();
+        }
+
+        // ОТМЕНА ДЕЙСТВИЯ (Назад / Ctrl+Z)
+        function undo() {
+            if (undoStack.length === 0) return;
+            
+            // Запоминаем текущее состояние в стопку повтора на случай, если пользователь передумает
+            redoStack.push(JSON.stringify(products));
+            
+            // Достаем последний снимок из истории отмены и восстанавливаем его
+            const prevState = undoStack.pop();
+            products = JSON.parse(prevState);
+            
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            updateHistoryButtons();
+            render();
+        }
+
+        // ПОВТОР ДЕЙСТВИЯ (Вперед / Ctrl+Y)
+        function redo() {
+            if (redoStack.length === 0) return;
+            
+            // Возвращаем снимок в историю отмены
+            undoStack.push(JSON.stringify(products));
+            
+            // Достаем слепок из стопки повтора
+            const nextState = redoStack.pop();
+            products = JSON.parse(nextState);
+            
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            updateHistoryButtons();
             render();
         }
 
@@ -1375,6 +1420,18 @@
                         }
                     }
                 }
+            }
+
+            // --- ГОРЯЧИЕ КЛАВИШИ ИСТОРИИ (Ctrl+Z и Ctrl+Y) ---
+            if (event.ctrlKey && event.key.toLowerCase() === 'z') {
+                event.preventDefault();
+                undo();
+                return;
+            }
+            if (event.ctrlKey && event.key.toLowerCase() === 'y') {
+                event.preventDefault();
+                redo();
+                return;
             }
 
             // --- СТАНДАРТНОЕ ЗАКРЫТИЕ ПО ESCAPE ---
