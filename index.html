@@ -154,9 +154,9 @@
                 <span style="font-size: 1.25rem;">📖</span>
                 <span>Рецепты</span>
             </button>
-            <button onclick="alert('Функция совместного доступа будет добавлена на этапе подключения базы данных.')" class="nav-btn nav-inactive">
-                <span style="font-size: 1.25rem;">👥</span>
-                <span>Семья</span>
+            <button id="navProfile" onclick="switchScreen('profile')" class="nav-btn nav-inactive">
+                <span style="font-size: 1.25rem;">👤</span>
+                <span>Профиль</span>
             </button>
         </footer>
 
@@ -425,6 +425,20 @@
             }
         ];
 
+        // Глобальный каталог уникальных продуктов пользователя
+        let userCatalog = JSON.parse(localStorage.getItem('user_products_catalog')) || [
+            'Молоко', 'Томаты', 'Сыр', 'Яйца', 'Соус', 'Хлеб', 'Огурец'
+        ];
+        // Функция автоматического пополнения каталога новыми именами
+        function addToCatalog(name) {
+            const cleanName = name.charAt(0).toUpperCase() + name.slice(1).trim();
+            if (cleanName && !userCatalog.includes(cleanName)) {
+                userCatalog.push(cleanName);
+                userCatalog.sort((a, b) => a.localeCompare(b, 'ru'));
+                localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
+            }
+        }
+
         let products = JSON.parse(localStorage.getItem('my_fridge_items')) || [
             { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя полка', daysLeft: 3 },
             { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя полка', daysLeft: 7 },
@@ -479,25 +493,32 @@
             const addBtn = document.getElementById('stickyAddBtn');
             const navFridge = document.getElementById('navFridge');
             const navRecipes = document.getElementById('navRecipes');
+            const navProfile = document.getElementById('navProfile');
+
+            // Сбрасываем стили у всех кнопок навигации
+            [navFridge, navRecipes, navProfile].forEach(btn => {
+                if (btn) { btn.className = "nav-btn nav-inactive"; }
+            });
 
             if (screen === 'fridge') {
                 title.innerHTML = '<span>🥛</span> Холодильник';
                 filterBar.classList.remove('hidden');
-                addBtn.classList.remove('hidden'); // Показываем плюс в холодильнике
-                navFridge.className = "nav-btn nav-active";
-                navRecipes.className = "nav-btn nav-inactive";
+                addBtn.classList.remove('hidden');
+                if (navFridge) navFridge.className = "nav-btn nav-active";
             } else if (screen === 'recipes') {
                 title.innerHTML = '<span>📖</span> Книга рецептов';
                 filterBar.classList.add('hidden');
-                addBtn.classList.remove('hidden'); // ЧЁТКАЯ ПРАВКА: Показываем плюс и в рецептах тоже!
-                navFridge.className = "nav-btn nav-inactive";
-                navRecipes.className = "nav-btn nav-active";
+                addBtn.classList.remove('hidden');
+                if (navRecipes) navRecipes.className = "nav-btn nav-active";
+            } else if (screen === 'profile') {
+                title.innerHTML = '<span>👤</span> База продуктов';
+                filterBar.classList.add('hidden');
+                addBtn.classList.add('hidden'); // Скрываем плюс в профиле
+                if (navProfile) navProfile.className = "nav-btn nav-active";
             } else if (screen === 'settings') {
                 title.innerHTML = '<span>⚙️</span> Настройка полок';
                 filterBar.classList.add('hidden');
-                addBtn.classList.add('hidden'); // Скрываем плюс в настройках
-                navFridge.className = "nav-btn nav-inactive";
-                navRecipes.className = "nav-btn nav-inactive";
+                addBtn.classList.add('hidden');
             }
             render();
         }
@@ -509,6 +530,7 @@
             
             if (currentScreen === 'fridge') { renderFridge(container); } 
             else if (currentScreen === 'recipes') { renderRecipes(container); }
+            else if (currentScreen === 'profile') { renderProfileCatalog(container); } // Подключаем отрисовку профиля
             else if (currentScreen === 'settings') { renderSettings(container); }
         }
 
@@ -759,24 +781,13 @@
         function showSuggestions(value) {
             const container = document.getElementById('customSuggestions');
             if (!container) return;
-            
             const searchStr = value.toLowerCase().trim();
-
-            // ЧЁТКОЕ ИСПРАВЛЕНИЕ: Если в поле ввода ничего нет (пусто), 
-            // принудительно прячем выпадашку и выходим из функции
-            if (searchStr.length === 0) {
-                container.classList.add('hidden');
-                return;
-            }
+            if (searchStr.length === 0) { container.classList.add('hidden'); return; }
             
-            const uniqueNames = [...new Set(products.map(p => p.name))];
-            const filtered = uniqueNames.filter(name => name.toLowerCase().includes(searchStr));
+            // ЧЁТКАЯ ПРАВКА: Ищем совпадения в вечной базе каталога пользователя
+            const filtered = userCatalog.filter(name => name.toLowerCase().includes(searchStr));
 
-            if (filtered.length === 0) {
-                container.classList.add('hidden');
-                return;
-            }
-
+            if (filtered.length === 0) { container.classList.add('hidden'); return; }
             container.innerHTML = '';
             container.classList.remove('hidden');
 
@@ -788,7 +799,6 @@
                 div.style.fontSize = '0.875rem';
                 div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
                 div.onmouseout = () => div.style.backgroundColor = 'transparent';
-                
                 div.onclick = () => {
                     document.getElementById('prodName').value = name;
                     container.classList.add('hidden');
@@ -808,6 +818,7 @@
             if (!rawName) return alert('Напишите название продукта!');
             // Превращаем первую букву в заглавную, а остальные оставляем как есть
             const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
+            addToCatalog(name); // Сохраняем имя в глобальный словарь пользователя
             const qty = parseInt(document.getElementById('prodQty').value) || 1;
             const shelf = selectedShelf;
             const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
@@ -1675,6 +1686,98 @@
             recipesDatabase = recipesDatabase.filter(r => r.id !== activeEditingRecipeId);
             localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
             closeEditRecipeModal();
+            render();
+        }
+
+        // --- СТРАНИЦА ПРОФИЛЯ: УПРАВЛЕНИЕ ГЛОБАЛЬНОЙ БАЗОЙ ТОВАРОВ ---
+        function renderProfileCatalog(container) {
+            const wrap = document.createElement('div');
+            wrap.style.display = 'flex';
+            wrap.style.flexDirection = 'column';
+            wrap.style.gap = '1rem';
+
+            const info = document.createElement('p');
+            info.textContent = 'Это ваша глобальная база эталонных продуктов. Изменение имени здесь автоматически обновит продукт на полках и в рецептах.';
+            info.style.fontSize = '0.85rem';
+            info.style.color = '#64748b';
+            info.style.margin = '0 0 0.5rem 0';
+            wrap.appendChild(info);
+
+            const listContainer = document.createElement('div');
+            listContainer.style.display = 'flex';
+            listContainer.style.flexDirection = 'column';
+            listContainer.style.gap = '0.5rem';
+
+            // Всегда сортируем каталог по алфавиту перед выводом
+            userCatalog.sort((a, b) => a.localeCompare(b, 'ru'));
+
+            userCatalog.forEach((catalogName, index) => {
+                const item = document.createElement('div');
+                item.style.display = 'flex';
+                item.style.alignItems = 'center';
+                item.style.justifyContent = 'space-between';
+                item.style.backgroundColor = '#ffffff';
+                item.style.border = '1px solid #e2e8f0';
+                item.style.padding = '0.5rem 0.75rem';
+                item.style.borderRadius = '0.5rem';
+                item.style.gap = '0.5rem';
+
+                item.innerHTML = `
+                    <span style="font-size: 1.25rem; flex-shrink: 0;">${getEmoji(catalogName)}</span>
+                    <input type="text" value="${catalogName}" onchange="globalRenameCatalogItem(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; flex-grow: 1; background: #f8fafc; font-weight: 500; min-width: 0; color: #334155;">
+                    <button onclick="globalDeleteCatalogItem(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить из глобальной базы">✕</button>
+                `;
+                listContainer.appendChild(item);
+            });
+
+            wrap.appendChild(listContainer);
+            container.appendChild(wrap);
+        }
+
+        // ГЛОБАЛЬНОЕ ПЕРЕИМЕНОВАНИЕ ВО ВСЕМ ПРИЛОЖЕНИИ
+        function globalRenameCatalogItem(index, inputVal) {
+            let rawNewName = inputVal.trim();
+            if (!rawNewName) return render();
+            
+            const newName = rawNewName.charAt(0).toUpperCase() + rawNewName.slice(1);
+            const oldName = userCatalog[index];
+
+            if (oldName === newName) return;
+
+            // 1. Меняем имя в самом каталоге
+            userCatalog[index] = newName;
+
+            // 2. Сквозное обновление на полках холодильника
+            products.forEach(p => {
+                if (p.name.toLowerCase().trim() === oldName.toLowerCase().trim()) {
+                    p.name = newName;
+                }
+            });
+
+            // 3. Сквозное обновление во всей Книге рецептов
+            recipesDatabase.forEach(recipe => {
+                recipe.ingredients.forEach(ing => {
+                    if (ing.name.toLowerCase().trim() === oldName.toLowerCase().trim()) {
+                        ing.name = newName;
+                    }
+                });
+            });
+
+            // Сохраняем все обновленные базы в память устройства
+            localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
+            localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
+
+            render();
+        }
+
+        // УДАЛЕНИЕ ИЗ СПРАВОЧНИКА
+        function globalDeleteCatalogItem(index) {
+            const nameToDelete = userCatalog[index];
+            if (!confirm(`Вы действительно хотите удалить "${nameToDelete}" из глобального справочника? Это уберет товар только из подсказок автозаполнения, продукты на полках останутся.`)) return;
+
+            userCatalog.splice(index, 1);
+            localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
             render();
         }
 
