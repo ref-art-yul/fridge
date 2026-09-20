@@ -150,6 +150,37 @@
             </button>
         </footer>
 
+        <!-- МОДАЛЬНОЕ ОКНО ДОБАВЛЕНИЯ РЕЦЕПТА -->
+        <div id="addRecipeModal" class="modal-overlay hidden">
+            <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                    <h3 style="font-size: 1.125rem; font-weight: 700; margin: 0; color: #0f172a;">Создать рецепт</h3>
+                    <span style="font-size: 1.25rem;">📖</span>
+                </div>
+                
+                <!-- Название рецепта -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название блюда</label>
+                    <input type="text" id="recName" placeholder="Например: Яичница с томатами" class="form-input" autocomplete="off" style="width: 100% !important; display: block !important; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                </div>
+
+                <!-- Контейнер для списка ингредиентов -->
+                <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
+                    <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
+                    <div id="recipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
+                    
+                    <!-- Кнопка добавления строчки ингредиента -->
+                    <button onclick="addIngredientRowToForm()" style="width: 100%; padding: 0.4rem; background-color: transparent; color: #4f46e5; border: 1px dashed #4f46e5; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Добавить ингредиент</button>
+                </div>
+                
+                <!-- Кнопки действий по нашему UX-стандарту (Отмена слева, Сохранить справа) -->
+                <div class="form-actions" style="display: flex !important; flex-direction: row !important; gap: 0.75rem !important; margin-top: 0.75rem !important; width: 100% !important;">
+                    <button onclick="closeAddRecipeModal()" class="btn-cancel" style="flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Отмена</button>
+                    <button onclick="saveCustomRecipe()" class="btn-submit" style="flex: 1; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Сохранить</button>
+                </div>
+            </div>
+        </div>
+
         <!-- МОДАЛЬНОЕ ОКНО НАСТРОЙКИ ПОЛОК -->
         <div id="settingsShelfModal" class="modal-overlay hidden">
             <div class="modal-content" style="display: flex !important; flex-direction: column !important; gap: 0.75rem !important; background-color: #ffffff; border-radius: 1rem; width: 100%; max-width: 24rem; padding: 1.5rem; box-sizing: border-box;">
@@ -297,7 +328,8 @@
             }
             return '📦';
         };
-        const recipesDatabase = [
+        
+        let recipesDatabase = JSON.parse(localStorage.getItem('my_custom_recipes')) || [
             {
                 id: 101,
                 title: "Классический омлет",
@@ -601,14 +633,18 @@
         }
 
         function openModal() { 
+            // Если мы находимся в Книге рецептов, плюс открывает создание рецепта
+            if (currentScreen === 'recipes') {
+                openAddRecipeModal();
+                return;
+            }
+
+            // Иначе плюс открывает добавление продукта в холодильник
             document.getElementById('addProductModal').classList.remove('hidden'); 
-            selectShelfRadio('Верхняя полка');
+            selectShelfRadio(groups[0]?.shelves[0] || 'Верхняя полка');
             setTimeout(() => {
                 const input = document.getElementById('prodName');
-                if (input) {
-                    input.focus();
-                    input.click();
-                }
+                if (input) { input.focus(); input.click(); }
             }, 50);
             const datalist = document.getElementById('customSuggestions');
             if (datalist) { showSuggestions(''); }
@@ -829,15 +865,18 @@
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
                 const settingsModal = document.getElementById('settingsShelfModal');
+                const recipeModal = document.getElementById('addRecipeModal');
                 
                 if (addModal && !addModal.classList.contains('hidden')) closeModal();
                 if (detailsModal && !detailsModal.classList.contains('hidden')) closeProductDetailsModal();
                 if (settingsModal && !settingsModal.classList.contains('hidden')) closeSettingsModal();
+                if (recipeModal && !recipeModal.classList.contains('hidden')) closeAddRecipeModal();
             }
             
             if (event.key === 'Enter') {
                 const addModal = document.getElementById('addProductModal');
                 const detailsModal = document.getElementById('productDetailsModal');
+                const recipeModal = document.getElementById('addRecipeModal');
                 
                 if (addModal && !addModal.classList.contains('hidden')) {
                     event.preventDefault();
@@ -847,6 +886,10 @@
                     event.preventDefault();
                     saveProductDetails();
                 }
+                if (recipeModal && !recipeModal.classList.contains('hidden')) {
+                    event.preventDefault();
+                    saveCustomRecipe();
+                }
             }
         });
 
@@ -854,10 +897,12 @@
             const addModal = document.getElementById('addProductModal');
             const detailsModal = document.getElementById('productDetailsModal');
             const settingsModal = document.getElementById('settingsShelfModal');
+            const recipeModal = document.getElementById('addRecipeModal');
             
             if (event.target === addModal) closeModal();
             if (event.target === detailsModal) closeProductDetailsModal();
             if (event.target === settingsModal) closeSettingsModal();
+            if (event.target === recipeModal) closeAddRecipeModal();
         });
 
         // АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ КНОПОК ПОЛОК ДЛЯ ОКНА ДОБАВЛЕНИЯ И РЕДАКТИРОВАНИЯ
@@ -1228,6 +1273,90 @@
 
             localStorage.setItem('my_fridge_groups', JSON.stringify(groups));
             renderSettingsModalList();
+            render();
+        }
+
+        // --- ЛОГИКА ДИНАМИЧЕСКИХ СТРОК ИНГРЕДИЕНТОВ ---
+        function openAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.remove('hidden');
+            document.getElementById('recipeIngredientsListContainer').innerHTML = '';
+            document.getElementById('recName').value = '';
+            
+            // Сразу добавляем одну пустую строчку для удобства
+            addIngredientRowToForm();
+            
+            // Автофокус на название блюда
+            setTimeout(() => {
+                const input = document.getElementById('recName');
+                if (input) input.focus();
+            }, 50);
+        }
+
+        function closeAddRecipeModal() {
+            document.getElementById('addRecipeModal').classList.add('hidden');
+        }
+
+        function addIngredientRowToForm() {
+            const container = document.getElementById('recipeIngredientsListContainer');
+            if (!container) return;
+
+            const row = document.createElement('div');
+            row.className = 'form-ingredient-row';
+            row.style.display = 'flex';
+            row.style.gap = '0.5rem';
+            row.style.alignItems = 'center';
+            row.style.width = '100%';
+
+            row.innerHTML = `
+                <input type="text" placeholder="Ингредиент" class="form-input rec-ing-name" autocomplete="off" style="flex: 2; font-size: 0.8rem; padding: 0.4rem 0.5rem;">
+                <input type="number" placeholder="Кол-во" min="1" value="1" class="form-input rec-ing-qty" style="width: 4rem; font-size: 0.8rem; padding: 0.4rem 0.5rem; text-align: center;">
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 0.25rem 0.5rem;" title="Удалить ингредиент">✕</button>
+            `;
+            container.appendChild(row);
+        }
+
+        function saveCustomRecipe() {
+            const titleInput = document.getElementById('recName');
+            let rawTitle = titleInput.value.trim();
+            if (!rawTitle) return alert('Напишите название блюда!');
+
+            // Делаем первую букву названия заглавной
+            const title = rawTitle.charAt(0).toUpperCase() + rawTitle.slice(1);
+
+            const rows = document.querySelectorAll('.form-ingredient-row');
+            const ingredients = [];
+
+            // Собираем данные из всех динамических строчек формы
+            rows.forEach(row => {
+                const nameInp = row.querySelector('.rec-ing-name');
+                const qtyInp = row.querySelector('.rec-ing-qty');
+                
+                if (nameInp && qtyInp) {
+                    let rawIngName = nameInp.value.trim();
+                    let ingQty = parseInt(qtyInp.value) || 1;
+                    
+                    if (rawIngName) {
+                        // Капитализируем имя ингредиента, чтобы оно идеально матчилось с продуктами
+                        const ingName = rawIngName.charAt(0).toUpperCase() + rawIngName.slice(1);
+                        ingredients.push({ name: ingName, qty: ingQty });
+                    }
+                }
+            });
+
+            if (ingredients.length === 0) {
+                return alert('Добавьте хотя бы один ингредиент к рецепту!');
+            }
+
+            // Добавляем новый рецепт в массив
+            recipesDatabase.push({
+                id: Date.now(), // Уникальный id на основе времени
+                title: title,
+                ingredients: ingredients
+            });
+
+            // Сохраняем базу в память смартфона и обновляем интерфейс
+            localStorage.setItem('my_custom_recipes', JSON.stringify(recipesDatabase));
+            closeAddRecipeModal();
             render();
         }
 
