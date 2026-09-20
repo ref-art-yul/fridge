@@ -2425,69 +2425,77 @@
             reader.readAsDataURL(file);
         }
 
-        // ЭТАП 3: Локальный ИИ-Генератор (Безотказная симуляция без внешних сетей и CORS)
+        // ЭТАП 3: Интеграция с открытым Vision ИИ-шлюзом (Работает без VPN и без ключей)
         async function sendImageToGemini(base64ImageText) {
             const aiModal = document.getElementById('aiLoadingModal');
             
+            const systemPrompt = "Ты — умный кухонный ассистент органайзера еды. Посмотри на эту фотографию продуктов. Твоя задача — распознать все съедобные продукты, определить их количество и распределить по полкам холодильника, строго соблюдая правила товарного соседства. " +
+                "Доступные полки в приложении: 'Верхняя полка', 'Средняя полка', 'Нижняя полка', 'Полки на двери'. " +
+                "Распределяй логично: молочные продукты и сыры — на Верхнюю или Среднюю полку; мясо, рыбу или готовые блюда — на Среднюю; овощи, фрукты и зелень — строго на Нижнюю полку; соусы, напитки, яйца — на Полки на двери. " +
+                "Верни ответ СТРОГО в формате валидного JSON-массива объектов без каких-либо вводных слов, разметки markdown или пояснений. Формат каждого объекта внутри массива должен быть строго таким: " +
+                "[{\"name\": \"Название продукта на русском языке с заглавной буквы в единственном числе\", \"qty\": 1, \"shelf\": \"Точное название полки из списка выше\"}]. " +
+                "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
+
             try {
-                // Имитируем задержку анализа снимка нейросетью в 2.5 секунды
-                await new Promise(resolve => setTimeout(resolve, 2500));
+                // ДЕЛАЕМ ТОЧНЫЙ ЗАПРОС К КОРРЕКТНОМУ ЭНДПОИНТУ ШЛЮЗА
+                const response = await fetch('https://llm-gateway.ru', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        model: "llava", // Официальная Vision-модель для чтения картинок
+                        messages: [
+                            {
+                                role: "user",
+                                content: systemPrompt,
+                                images: [base64ImageText] // Передаем чистую строку Base64
+                            }
+                        ],
+                        stream: false
+                    })
+                });
 
-                let recognizedItems = [];
+                if (!response.ok) throw new Error('Сервер ИИ временно перегружен или недоступен');
+
+                const data = await response.json();
+                let aiTextResponse = data.message.content.trim();
                 
-                // Проверяем, есть ли продукты в вашей базе Профиля
-                if (userCatalog && userCatalog.length > 0) {
-                    // Перемешиваем каталог продуктов Профиля и выбираем 2-3 случайных товара
-                    const shuffled = [...userCatalog].sort(() => 0.5 - Math.random());
-                    const randomCount = Math.floor(Math.random() * 2) + 2; 
-                    const selectedProds = shuffled.slice(0, randomCount);
-
-                    // Умная симуляция: автоматически распределяем выбранную еду по правильным полкам холодильника
-                    selectedProds.forEach(catalogItem => {
-                        let targetShelf = 'Средняя полка';
-                        const nameLower = catalogItem.name.toLowerCase();
-
-                        if (nameLower.includes('молоко') || nameLower.includes('сыр') || nameLower.includes('йогурт')) {
-                            targetShelf = 'Верхняя полка';
-                        } else if (nameLower.includes('томат') || nameLower.includes('огурец') || nameLower.includes('салат') || nameLower.includes('зелень')) {
-                            targetShelf = 'Нижняя полка';
-                        } else if (nameLower.includes('соус') || nameLower.includes('яйца') || nameLower.includes('напиток')) {
-                            targetShelf = 'Полки на двери';
-                        }
-
-                        recognizedItems.push({
-                            name: catalogItem.name,
-                            qty: Math.floor(Math.random() * 2) + 1, // Случайное количество 1 или 2 шт.
-                            shelf: targetShelf
-                        });
-                    });
-                } else {
-                    // Резервный дефолтный набор продуктов, если база Профиля пуста
-                    recognizedItems = [
-                        { name: "Молоко", qty: 1, shelf: "Верхняя полка" },
-                        { name: "Томаты", qty: 2, shelf: "Нижняя полка" }
-                    ];
+                // Очищаем от возможных markdown-тегов ```json
+                if (aiTextResponse.startsWith('```')) {
+                    aiTextResponse = aiTextResponse.replace(/^```json/, '').replace(/```$/, '').trim();
                 }
 
-                console.log("Локальный ИИ-модуль успешно сгенерировал продукты:", recognizedItems);
+                // Вырезаем строго границы JSON-массива, если модель добавила лишний текст
+                const startIdx = aiTextResponse.indexOf('[');
+                const endIdx = aiTextResponse.lastIndexOf(']');
+                if (startIdx !== -1 && endIdx !== -1) {
+                    aiTextResponse = aiTextResponse.substring(startIdx, endIdx + 1);
+                }
 
-                if (recognizedItems.length > 0) {
-                    saveState(); // Запоминаем текущее состояние в Историю (Undo), чтобы можно было отменить симуляцию!
+                const recognizedItems = JSON.parse(aiTextResponse);
+                console.log("Настоящий ИИ успешно распознал продукты:", recognizedItems);
+
+                if (Array.isArray(recognizedItems) && recognizedItems.length > 0) {
+                    saveState(); // Запоминаем слепок в Историю (Undo), чтобы ИИ-ввод можно было легко отменить!
 
                     const now = Date.now();
 
                     recognizedItems.forEach(aiProd => {
-                        const cleanName = aiProd.name.charAt(0).toUpperCase() + aiProd.name.slice(1).trim();
-                        const qty = aiProd.qty;
+                        if (!aiProd.name || !aiProd.shelf) return;
 
-                        // Считываем персональный срок годности этого товара из базы Профиля
+                        const cleanName = aiProd.name.charAt(0).toUpperCase() + aiProd.name.slice(1).trim();
+                        const qty = parseInt(aiProd.qty) || 1;
+
+                        // Автоматически регистрируем имя продукта в глобальной базе Профиля!
+                        addToCatalog(cleanName);
+
+                        // Подтягиваем кастомный срок хранения по умолчанию из базы Профиля
                         let defaultDays = 5;
                         const catalogItem = userCatalog.find(c => c.name.toLowerCase().trim() === cleanName.toLowerCase().trim());
                         if (catalogItem && catalogItem.defaultDays !== undefined) {
                             defaultDays = catalogItem.defaultDays;
                         }
 
-                        // Проверяем, нет ли уже такого же свежего продукта на этой же полке
+                        // Проверяем на дубликаты на той же полке
                         const existing = products.find(p => 
                             p.name.toLowerCase().trim() === cleanName.toLowerCase().trim() && 
                             p.shelf === aiProd.shelf &&
@@ -2495,9 +2503,8 @@
                         );
 
                         if (existing) {
-                            existing.qty += qty; // Просто увеличиваем количество
+                            existing.qty += qty;
                         } else {
-                            // Создаем новую вертикальную карточку продукта
                             products.push({
                                 id: now + Math.random(),
                                 name: cleanName,
@@ -2511,14 +2518,15 @@
                     });
 
                     localStorage.setItem('my_fridge_items', JSON.stringify(products));
-                    alert("✨ Успех! Локальный ИИ проанализировал снимок и разложил по полкам продуктов: " + recognizedItems.length + " шт.");
+                    alert("✨ Успех! Настоящий ИИ успешно распознал и разложил по полкам продуктов: " + recognizedItems.length + " шт.");
+                } else {
+                    alert("ℹ️ ИИ не смог чётко разглядеть продукты на снимке. Попробуйте сделать другое фото при хорошем освещении.");
                 }
 
             } catch (error) {
-                console.error("Сбой локального ИИ-модуля:", error);
-                alert("⚠️ Не удалось обработать изображение. Попробуйте ещё раз.");
+                console.error("Критический сбой ИИ-модуля:", error);
+                alert("⚠️ Сервер обработки изображений сейчас перегружен. Пожалуйста, повторите попытку через пару секунд.");
             } finally {
-                // Закрываем окно загрузки, очищаем камеру и обновляем интерфейс полок
                 if (aiModal) aiModal.classList.add('hidden');
                 const camInp = document.getElementById('cameraInput');
                 if (camInp) camInp.value = '';
@@ -2526,9 +2534,9 @@
             }
         }
 
-        // Самая финальная инициализация всего приложения при старте страницы
+        // Самая финальная инициализация всего приложения при старте
         render();
 
     </script>
 </body>
-</html><!-- vercel reload -->
+</html><!-- vercel push flash ai -->
