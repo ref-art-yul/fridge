@@ -32,7 +32,7 @@ export default async function handler(request, response) {
             "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
 
         // Запрос к OpenRouter с переключением на более стабильный бесплатный Gemini
-        const aiResponse = await fetch('https://openrouter.ai', {
+        const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: { 
                 'Content-Type': 'application/json',
