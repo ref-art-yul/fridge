@@ -1342,6 +1342,8 @@
             saveState();
             
             product.name = nameInput.charAt(0).toUpperCase() + nameInput.slice(1);
+            // ЧЁТКАЯ ПРАВКА: Если изменённое имя уникально, автоматически заносим его в глобальную базу Профиля
+            addToCatalog(product.name);
             product.qty = parseInt(document.getElementById('detailsQty').value) || 1;
             product.shelf = detailsSelectedShelf;
 
