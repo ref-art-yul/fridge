@@ -2438,7 +2438,7 @@
 
             try {
                 // ДЕЛАЕМ ТОЧНЫЙ ЗАПРОС К КОРРЕКТНОМУ ЭНДПОИНТУ ШЛЮЗА
-                const response = await fetch('https://llm-gateway.ru', {
+                const response = await fetch('https://ollama.llm-gateway.ru/api/chat', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
