@@ -38,7 +38,7 @@
         .shelf-border { display: flex; flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem; background-color: #ffffff; border: 2px dashed #e2e8f0; border-radius: 0.75rem; min-height: 4.5rem; transition: all 0.2s; width: 100%; box-sizing: border-box; }
         .shelf-hover { background-color: rgba(79, 70, 229, 0.15) !important; border-color: #4f46e5 !important; }
         .list-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; justify-content: flex-start; }
-        .product-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.35rem; cursor: pointer; transition: all 0.2s; position: relative; gap: 0.25rem; box-sizing: border-box; height: 6.8rem; width: 64px; text-align: center; flex-shrink: 0; }
+        .product-card { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.25rem 0.15rem; cursor: pointer; transition: all 0.2s; position: relative; gap: 0.15rem; box-sizing: border-box; height: 4.8rem; width: 64px; text-align: center; flex-shrink: 0; overflow: hidden; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .product-spoiled { background-color: #fff1f2 !important; border-color: #fca5a5 !important; }
         .spoiled-sticker { background-color: #ef4444; color: #ffffff; font-size: 0.6rem; font-weight: 500; padding: 0.2rem 0.5rem; border-radius: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2); height: 1.25rem; box-sizing: border-box; margin: 0; }
@@ -713,7 +713,7 @@
 
             card.innerHTML = `
                 <span class="product-emoji" style="font-size: 1.5rem; line-height: 1;">${getEmoji(item.name)}</span>
-                <span class="product-name" style="font-size: 0.85rem; font-weight: 600; color: #334155; display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0;">${item.name}</span>
+                <span class="product-name" style="font-size: 0.7rem; font-weight: 600; color: #334155; display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0;">${item.name}</span>
                 ${badgeHTML}
                 <div style="margin-top: auto; display: flex; justify-content: center; width: 100%; min-height: 1.25rem; align-items: center;">
                     ${daysHTML}
