@@ -562,8 +562,19 @@
         }
 
         function updateHistoryButtons() {
-            document.getElementById('btnUndo').disabled = historyUndo.length === 0;
-            document.getElementById('btnRedo').disabled = historyRedo.length === 0;
+            const undoB = document.getElementById('undoBtn');
+            const redoB = document.getElementById('redoBtn');
+            
+            // ЖЕСТКАЯ ПОДСТРАХОВКА: Если кнопок нет на текущем экране, просто выходим без ошибок в консоли
+            if (!undoB || !redoB) return;
+
+            undoB.disabled = undoStack.length === 0;
+            if (undoStack.length === 0) undoB.classList.add('opacity-50');
+            else undoB.classList.remove('opacity-50');
+
+            redoB.disabled = redoStack.length === 0;
+            if (redoStack.length === 0) redoB.classList.add('opacity-50');
+            else redoB.classList.remove('opacity-50');
         }
 
         function switchScreen(screen) {
