@@ -1351,6 +1351,10 @@
                 <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 0.25rem 0.5rem;" title="Удалить ингредиент">✕</button>
             `;
             container.appendChild(row);
+            
+            // АВТОФОКУС: находим инпут в только что добавленной строке и ставим туда курсор
+            const newInp = row.querySelector('.rec-ing-name');
+            if (newInp) newInp.focus();
         }
 
         function validateRecipeIngredients(rowClassName, inputClassName) {
@@ -1484,6 +1488,11 @@
                 <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1rem; padding: 0.25rem 0.5rem;" title="Удалить ингредиент">✕</button>
             `;
             container.appendChild(row);
+            
+            // АВТОФОКУС: находим инпут в только что добавленной строке редактирования
+            const newInp = row.querySelector('.edit-rec-ing-name');
+            if (newInp) newInp.focus();
+
         }
 
         function saveEditRecipeDetails() {
