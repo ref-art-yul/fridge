@@ -118,4 +118,4 @@ export default async function handler(request, response) {
         // СУПЕР-ДИАГНОСТИКА: Отправляем точный текст ошибки прямо на экран телефона!
         return response.status(500).json({ error: 'Ошибка сервера при распознавании', details: error.message });
     }
-}
+}//
