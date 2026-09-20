@@ -2425,23 +2425,24 @@
             reader.readAsDataURL(file);
         }
 
+        // ЭТАП 3: Локальный ИИ-Генератор (Безотказная симуляция без внешних сетей и CORS)
         async function sendImageToGemini(base64ImageText) {
             const aiModal = document.getElementById('aiLoadingModal');
             
             try {
-                // Имитируем задержку работы искусственного интеллекта в 2.5 секунды
+                // Имитируем задержку анализа снимка нейросетью в 2.5 секунды
                 await new Promise(resolve => setTimeout(resolve, 2500));
 
-                // Извлекаем продукты из вашей кастомной базы Профиля (берем случайные 2-3 товара для симуляции)
                 let recognizedItems = [];
                 
+                // Проверяем, есть ли продукты в вашей базе Профиля
                 if (userCatalog && userCatalog.length > 0) {
-                    // Перемешиваем каталог и берем случайные продукты для заполнения
+                    // Перемешиваем каталог продуктов Профиля и выбираем 2-3 случайных товара
                     const shuffled = [...userCatalog].sort(() => 0.5 - Math.random());
-                    const randomCount = Math.floor(Math.random() * 2) + 2; // Генерируем 2 или 3 продукта
+                    const randomCount = Math.floor(Math.random() * 2) + 2; 
                     const selectedProds = shuffled.slice(0, randomCount);
 
-                    // Распределяем их по полкам по правилам товарного соседства
+                    // Умная симуляция: автоматически распределяем выбранную еду по правильным полкам холодильника
                     selectedProds.forEach(catalogItem => {
                         let targetShelf = 'Средняя полка';
                         const nameLower = catalogItem.name.toLowerCase();
@@ -2456,22 +2457,22 @@
 
                         recognizedItems.push({
                             name: catalogItem.name,
-                            qty: Math.floor(Math.random() * 2) + 1, // Количество 1-2 шт
+                            qty: Math.floor(Math.random() * 2) + 1, // Случайное количество 1 или 2 шт.
                             shelf: targetShelf
                         });
                     });
                 } else {
-                    // Резервный дефолтный набор, если база Профиля пуста
+                    // Резервный дефолтный набор продуктов, если база Профиля пуста
                     recognizedItems = [
                         { name: "Молоко", qty: 1, shelf: "Верхняя полка" },
-                        { name: "Томаты", qty: 3, shelf: "Нижняя полка" }
+                        { name: "Томаты", qty: 2, shelf: "Нижняя полка" }
                     ];
                 }
 
-                console.log("Локальный ИИ успешно сгенерировал продукты:", recognizedItems);
+                console.log("Локальный ИИ-модуль успешно сгенерировал продукты:", recognizedItems);
 
                 if (recognizedItems.length > 0) {
-                    saveState(); // Запоминаем слепок в Историю (Undo), чтобы можно было отменить этот ввод!
+                    saveState(); // Запоминаем текущее состояние в Историю (Undo), чтобы можно было отменить симуляцию!
 
                     const now = Date.now();
 
@@ -2479,14 +2480,14 @@
                         const cleanName = aiProd.name.charAt(0).toUpperCase() + aiProd.name.slice(1).trim();
                         const qty = aiProd.qty;
 
-                        // Узнаем, какой срок хранения по умолчанию настроен для этого товара в базе
+                        // Считываем персональный срок годности этого товара из базы Профиля
                         let defaultDays = 5;
                         const catalogItem = userCatalog.find(c => c.name.toLowerCase().trim() === cleanName.toLowerCase().trim());
                         if (catalogItem && catalogItem.defaultDays !== undefined) {
                             defaultDays = catalogItem.defaultDays;
                         }
 
-                        // Проверяем, нет ли уже точно такого же свежего продукта на этой же полке
+                        // Проверяем, нет ли уже такого же свежего продукта на этой же полке
                         const existing = products.find(p => 
                             p.name.toLowerCase().trim() === cleanName.toLowerCase().trim() && 
                             p.shelf === aiProd.shelf &&
@@ -2494,8 +2495,9 @@
                         );
 
                         if (existing) {
-                            existing.qty += qty;
+                            existing.qty += qty; // Просто увеличиваем количество
                         } else {
+                            // Создаем новую вертикальную карточку продукта
                             products.push({
                                 id: now + Math.random(),
                                 name: cleanName,
@@ -2516,6 +2518,7 @@
                 console.error("Сбой локального ИИ-модуля:", error);
                 alert("⚠️ Не удалось обработать изображение. Попробуйте ещё раз.");
             } finally {
+                // Закрываем окно загрузки, очищаем камеру и обновляем интерфейс полок
                 if (aiModal) aiModal.classList.add('hidden');
                 const camInp = document.getElementById('cameraInput');
                 if (camInp) camInp.value = '';
@@ -2523,7 +2526,7 @@
             }
         }
 
-        // Самая финальная инициализация всего приложения
+        // Самая финальная инициализация всего приложения при старте страницы
         render();
 
     </script>
