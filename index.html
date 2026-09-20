@@ -411,6 +411,12 @@
 
         const getEmoji = (name) => {
             const cleanName = name.toLowerCase().trim();
+            
+            // ПРИОРИТЕТ: Сначала ищем, нет ли этого продукта в вашей личной базе с кастомным эмодзи
+            const catalogItem = userCatalog.find(item => item.name.toLowerCase() === cleanName);
+            if (catalogItem && catalogItem.emoji) return catalogItem.emoji;
+
+            // Если в профиле продукта еще нет, берем из стандартной карты автозаполнения
             for (const key in emojiMap) {
                 if (cleanName.includes(key)) return emojiMap[key];
             }
@@ -449,16 +455,42 @@
             }
         ];
 
-        // Глобальный каталог уникальных продуктов пользователя
+        // Очистка локального кэша для применения новой структуры (Рекомендуется)
+        if (localStorage.getItem('user_products_catalog') && !localStorage.getItem('user_products_catalog').includes('{')) { localStorage.removeItem('user_products_catalog'); }
+        
+        // Переводим каталог на структуру объектов (Имя + Эмодзи)
         let userCatalog = JSON.parse(localStorage.getItem('user_products_catalog')) || [
-            'Молоко', 'Томаты', 'Сыр', 'Яйца', 'Соус', 'Хлеб', 'Огурец'
+            { name: 'Молоко', emoji: '🥛' },
+            { name: 'Кефир', emoji: '🥛' },
+            { name: 'Ряженка', emoji: '🥛' },
+            { name: 'Сливки', emoji: '🥛' },
+            { name: 'Томаты', emoji: '🍅' },
+            { name: 'Помироры', emoji: '🍅' },
+            { name: 'Томат', emoji: '🍅' },
+            { name: 'Помирор', emoji: '🍅' },
+            { name: 'Сыр', emoji: '🧀' },
+            { name: 'Яйца', emoji: '🥚' },
+            { name: 'Яйцо', emoji: '🥚' },
+            { name: 'Соус', emoji: '🥫' },
+            { name: 'Кетчуп', emoji: '🥫' },
+            { name: 'Томатная паста', emoji: '🥫' },
+            { name: 'Хлеб', emoji: '🍞' },
+            { name: 'Огурец', emoji: '🥒' },
+            { name: 'Огурцы', emoji: '🥒' }
         ];
-        // Функция автоматического пополнения каталога новыми именами
+
         function addToCatalog(name) {
             const cleanName = name.charAt(0).toUpperCase() + name.slice(1).trim();
-            if (cleanName && !userCatalog.includes(cleanName)) {
-                userCatalog.push(cleanName);
-                userCatalog.sort((a, b) => a.localeCompare(b, 'ru'));
+            if (!cleanName) return;
+            
+            // Проверяем, есть ли уже продукт с таким именем в базе
+            const exists = userCatalog.some(item => item.name.toLowerCase() === cleanName.toLowerCase());
+            if (!exists) {
+                userCatalog.push({
+                    name: cleanName,
+                    emoji: getEmoji(cleanName) // Берем базовый эмодзи из авто-карты
+                });
+                userCatalog.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
                 localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
             }
         }
@@ -852,23 +884,23 @@
             const searchStr = value.toLowerCase().trim();
             if (searchStr.length === 0) { container.classList.add('hidden'); return; }
             
-            // ЧЁТКАЯ ПРАВКА: Ищем совпадения в вечной базе каталога пользователя
-            const filtered = userCatalog.filter(name => name.toLowerCase().includes(searchStr));
+            // Фильтруем массив объектов по свойству .name
+            const filtered = userCatalog.filter(item => item.name.toLowerCase().includes(searchStr));
 
             if (filtered.length === 0) { container.classList.add('hidden'); return; }
             container.innerHTML = '';
             container.classList.remove('hidden');
 
-            filtered.forEach(name => {
+            filtered.forEach(item => {
                 const div = document.createElement('div');
-                div.textContent = name;
+                div.textContent = item.emoji + ' ' + item.name; // Показываем подсказку сразу с его эмодзи!
                 div.style.padding = '0.5rem 0.75rem';
                 div.style.cursor = 'pointer';
                 div.style.fontSize = '0.875rem';
                 div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
                 div.onmouseout = () => div.style.backgroundColor = 'transparent';
                 div.onclick = () => {
-                    document.getElementById('prodName').value = name;
+                    document.getElementById('prodName').value = item.name;
                     container.classList.add('hidden');
                 };
                 container.appendChild(div);
@@ -1844,7 +1876,7 @@
             listContainer.style.gap = '0.5rem';
 
             // Всегда сортируем каталог по алфавиту перед выводом
-            userCatalog.sort((a, b) => a.localeCompare(b, 'ru'));
+            userCatalog.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
             userCatalog.forEach((catalogName, index) => {
                 const item = document.createElement('div');
@@ -1858,8 +1890,9 @@
                 item.style.gap = '0.5rem';
 
                 item.innerHTML = `
-                    <span style="font-size: 1.25rem; flex-shrink: 0;">${getEmoji(catalogName)}</span>
-                    <input type="text" value="${catalogName}" onchange="globalRenameCatalogItem(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; flex-grow: 1; background: #f8fafc; font-weight: 500; min-width: 0; color: #334155;">
+                    <!-- Активное инпут-поле для изменения эмодзи с жесткой валидацией -->
+                    <input type="text" value="${catalogItem.emoji}" oninput="validateAndChangeEmoji(${index}, this)" style="width: 2.2rem; height: 2.2rem; text-align: center; font-size: 1.25rem; border: 1px solid #cbd5e1; border-radius: 0.375rem; background: #ffffff; padding: 0; box-sizing: border-box; flex-shrink: 0; cursor: pointer;" title="Изменить эмодзи продукта">
+                    <input type="text" value="${catalogItem.name}" onchange="globalRenameCatalogItem(${index}, this.value)" style="border: 1px solid #cbd5e1; padding: 0.35rem 0.5rem; font-size: 0.875rem; border-radius: 0.375rem; flex-grow: 1; background: #f8fafc; font-weight: 500; min-width: 0; color: #334155;">
                     <button onclick="globalDeleteCatalogItem(${index})" style="background: none; border: none; color: #ef4444; font-weight: bold; cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;" title="Удалить из глобальной базы">✕</button>
                 `;
                 listContainer.appendChild(item);
@@ -1867,6 +1900,32 @@
 
             wrap.appendChild(listContainer);
             container.appendChild(wrap);
+        }
+
+        // ВАЛИДАЦИЯ И ОБНОВЛЕНИЕ ЭМОДЗИ В РЕАЛЬНОМ ВРЕМЕНИ
+        function validateAndChangeEmoji(index, inputElement) {
+            let val = inputElement.value.trim();
+            if (!val) return;
+
+            // Современное регулярное выражение для поиска любых эмодзи (включая составные)
+            const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F190}\u{1F300}-\u{1F773}\u{1F780}-\u{1F7D8}\u{1F7E0}-\u{1F7EB}\u{1F800}-\u{1F80B}\u{1F810}-\u{1F847}\u{1F850}-\u{1F859}\u{1F860}-\u{1F887}\u{1F890}-\u{1F8AD}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA53}\u{1FA60}-\u{1FA6D}\u{1FA70}-\u{1FA74}\u{1FA78}-\u{1FA7A}\u{1FA80}-\u{1FA86}\u{1FA90}-\u{1FAAC}\u{1FAB0}-\u{1FABA}\u{1FAC0}-\u{1FAC5}\u{1FAD0}-\u{1FAD6}\u{200D}\u{FE0F}]/gu;
+            const match = val.match(emojiRegex);
+
+            if (match && match.length > 0) {
+                // Берем строго первый найденный эмодзи из строки, отсекая всё лишнее
+                const cleanEmoji = match[0];
+                inputElement.value = cleanEmoji;
+                
+                // Сохраняем новый эмодзи в базу данных каталога
+                userCatalog[index].emoji = cleanEmoji;
+                localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
+                
+                // Мгновенно обновляем интерфейс (полки и рецепты сразу подхватят новый значок!)
+                render();
+            } else {
+                // Если пользователь ввёл буквы, цифры или символы — стираем ввод и возвращаем прошлый эмодзи
+                inputElement.value = userCatalog[index].emoji;
+            }
         }
 
         // ГЛОБАЛЬНОЕ ПЕРЕИМЕНОВАНИЕ ВО ВСЕМ ПРИЛОЖЕНИИ
