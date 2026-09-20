@@ -413,31 +413,25 @@
             const addBtn = document.getElementById('stickyAddBtn');
             const navFridge = document.getElementById('navFridge');
             const navRecipes = document.getElementById('navRecipes');
-            const btnSettings = document.getElementById('btnSettings');
-
-            // Подсвечиваем шестерёнку, если мы на экране настроек
-            if (btnSettings) {
-                btnSettings.querySelector('svg').style.stroke = (screen === 'settings') ? '#4f46e5' : '#64748b';
-            }
 
             if (screen === 'fridge') {
                 title.innerHTML = '<span>🥛</span> Холодильник';
-                if (filterBar) filterBar.classList.remove('hidden');
-                if (addBtn) addBtn.classList.remove('hidden');
-                if (navFridge) navFridge.className = "nav-btn nav-active";
-                if (navRecipes) navRecipes.className = "nav-btn nav-inactive";
+                filterBar.classList.remove('hidden');
+                addBtn.classList.remove('hidden'); // Показываем плюс в холодильнике
+                navFridge.className = "nav-btn nav-active";
+                navRecipes.className = "nav-btn nav-inactive";
             } else if (screen === 'recipes') {
                 title.innerHTML = '<span>📖</span> Книга рецептов';
-                if (filterBar) filterBar.classList.add('hidden');
-                if (addBtn) addBtn.classList.add('hidden');
-                if (navFridge) navFridge.className = "nav-btn nav-inactive";
-                if (navRecipes) navRecipes.className = "nav-btn nav-active";
+                filterBar.classList.add('hidden');
+                addBtn.classList.remove('hidden'); // ЧЁТКАЯ ПРАВКА: Показываем плюс и в рецептах тоже!
+                navFridge.className = "nav-btn nav-inactive";
+                navRecipes.className = "nav-btn nav-active";
             } else if (screen === 'settings') {
                 title.innerHTML = '<span>⚙️</span> Настройка полок';
-                if (filterBar) filterBar.classList.add('hidden');
-                if (addBtn) addBtn.classList.add('hidden');
-                if (navFridge) navFridge.className = "nav-btn nav-inactive";
-                if (navRecipes) navRecipes.className = "nav-btn nav-inactive";
+                filterBar.classList.add('hidden');
+                addBtn.classList.add('hidden'); // Скрываем плюс в настройках
+                navFridge.className = "nav-btn nav-inactive";
+                navRecipes.className = "nav-btn nav-inactive";
             }
             render();
         }
