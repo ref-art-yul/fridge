@@ -504,13 +504,18 @@
             }
         }
 
-        let products = JSON.parse(localStorage.getItem('my_fridge_items')) || [
-            { id: 1, name: 'Молоко', qty: 2, shelf: 'Верхняя полка', daysLeft: 3 },
-            { id: 2, name: 'Томаты', qty: 5, shelf: 'Нижняя полка', daysLeft: 7 },
-            { id: 3, name: 'Сыр', qty: 1, shelf: 'Средняя полка', daysLeft: 1 },
-            { id: 4, name: 'Яйца', qty: 10, shelf: 'Средняя полка', daysLeft: 12 },
-            { id: 5, name: 'Соус', qty: 1, shelf: 'Полки на двери', daysLeft: 30 }
-        ];
+        // ЧЁТКАЯ ПРАВКА: Инициализируем стартовые продукты с ПРАВИЛЬНЫМ временем создания текущего момента
+        let products = JSON.parse(localStorage.getItem('my_fridge_items'));
+        if (!products) {
+            const now = Date.now();
+            products = [
+                { id: now + 1, name: 'Молоко', qty: 2, shelf: 'Верхняя полка', initialDays: 3, daysLeft: 3, createdAt: now },
+                { id: now + 2, name: 'Томаты', qty: 5, shelf: 'Нижняя полка', initialDays: 7, daysLeft: 7, createdAt: now },
+                { id: now + 3, name: 'Сыр', qty: 1, shelf: 'Средняя полка', initialDays: 1, daysLeft: 1, createdAt: now },
+                { id: now + 4, name: 'Яйца', qty: 10, shelf: 'Средняя полка', initialDays: 12, daysLeft: 12, createdAt: now },
+                { id: now + 5, name: 'Соус', qty: 1, shelf: 'Полки на двери', initialDays: 30, daysLeft: 30, createdAt: now }
+            ];
+        }
 
         // Настройки дней для окрашивания (по умолчанию 1 и 3)
         let expiryRedDays = parseInt(localStorage.getItem('my_fridge_red_days')) || 1;
