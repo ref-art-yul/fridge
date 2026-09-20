@@ -514,6 +514,24 @@
 
         function renderFridge(container) {
             let displayItems = JSON.parse(JSON.stringify(products));
+            
+            // АВТОМАТИЧЕСКИЙ ПЕРЕСЧЕТ СРОКОВ ГОДНОСТИ С ТЕЧЕНИЕМ ВРЕМЕНИ
+            displayItems.forEach(item => {
+                // Если у старых продуктов нет даты создания (createdAt), создаем её текущим моментом
+                if (!item.createdAt) {
+                    item.createdAt = item.id;
+                    item.initialDays = item.daysLeft;
+                }
+                
+                // Высчитываем, сколько миллисекунд прошло с момента добавления продукта до текущей секунды
+                const msPassed = Date.now() - item.createdAt;
+                
+                // Переводим миллисекунды в полные дни (1 день = 24 * 60 * 60 * 1000 мс)
+                const daysPassed = Math.floor(msPassed / (1000 * 60 * 60 * 24));
+                
+                // Вычитаем прошедшие дни из первоначального срока годности
+                item.daysLeft = item.initialDays - daysPassed;
+            });
 
             // ЧЁТКАЯ ПРАВКА: Если выбран режим "По расположению" (classic), мы рисуем сгруппированные зоны и полки
             if (currentMode === 'classic') {
@@ -773,7 +791,16 @@
             );
 
             if (existing) { existing.qty += qty; } 
-            else { products.push({ id: Date.now(), name, qty, shelf, daysLeft }); }
+            else { 
+                products.push({ 
+                    id: Date.now(), 
+                    name, 
+                    qty, 
+                    shelf, 
+                    initialDays: daysLeft, // Запоминаем, сколько дней было изначально
+                    createdAt: Date.now()  // Запоминаем точную дату и время добавления в миллисекундах
+                }); 
+            }
 
             nameInput.value = '';
             document.getElementById('prodQty').value = '1';
@@ -916,7 +943,10 @@
             // Автоматически делаем первую букву заглавной
             product.name = nameInput.charAt(0).toUpperCase() + nameInput.slice(1);
             product.qty = parseInt(document.getElementById('detailsQty').value) || 1;
-            product.daysLeft = parseInt(document.getElementById('detailsDays').value) || 0;
+            const newDays = parseInt(document.getElementById('detailsDays').value) || 0;
+            product.initialDays = newDays;
+            product.daysLeft = newDays;
+            product.createdAt = Date.now(); // Сбрасываем таймер на текущую секунду
             product.shelf = detailsSelectedShelf;
 
             localStorage.setItem('my_fridge_items', JSON.stringify(products));
