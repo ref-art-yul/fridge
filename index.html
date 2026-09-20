@@ -785,7 +785,31 @@
             if (datalist) { showSuggestions(''); }
         }
 
+        function highlightSuggestion(containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const items = container.querySelectorAll('div');
+            if (items.length === 0) return;
+
+            // Корректируем индекс, если вышли за границы списка
+            if (currentSuggestionIndex >= items.length) currentSuggestionIndex = 0;
+            if (currentSuggestionIndex < 0) currentSuggestionIndex = items.length - 1;
+
+            // Пробегаемся по всем пунктам и подсвечиваем нужный
+            items.forEach((div, idx) => {
+                if (idx === currentSuggestionIndex) {
+                    div.style.backgroundColor = '#e2e8f0'; // Серый цвет активного пункта
+                    // Автоматически прокручиваем список, если пунктов много
+                    div.scrollIntoView({ block: 'nearest' });
+                } else {
+                    div.style.backgroundColor = 'transparent';
+                }
+            });
+        }
+
         function showSuggestions(value) {
+            currentSuggestionIndex = -1;
             const container = document.getElementById('customSuggestions');
             if (!container) return;
             const searchStr = value.toLowerCase().trim();
@@ -918,6 +942,8 @@
             render();
         }
 
+        // Индекс текущего выделенного стрелочками элемента в списке подсказок
+        let currentSuggestionIndex = -1;
         let activeEditingProductId = null;
         let detailsSelectedShelf = 'Верхняя';
 
@@ -1017,13 +1043,46 @@
 
         // ГЛОБАЛЬНЫЙ ОБРАБОТЧИК КЛАВИАТУРЫ (Escape и Enter)
         document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape') {
-                const addModal = document.getElementById('addProductModal');
-                const detailsModal = document.getElementById('productDetailsModal');
-                const settingsModal = document.getElementById('settingsShelfModal');
-                const recipeModal = document.getElementById('addRecipeModal');
-                const editRecModal = document.getElementById('editRecipeModal');
+            const addModal = document.getElementById('addProductModal');
+            const detailsModal = document.getElementById('productDetailsModal');
+            const settingsModal = document.getElementById('settingsShelfModal');
+            const recipeModal = document.getElementById('addRecipeModal');
+            const editRecModal = document.getElementById('editRecipeModal');
+            
+            // Находим контейнер подсказок
+            const suggestionsContainer = document.getElementById('customSuggestions');
+            const isSuggestionsOpen = suggestionsContainer && !suggestionsContainer.classList.contains('hidden');
+
+            // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ ---
+            if (isSuggestionsOpen && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
+                const items = suggestionsContainer.querySelectorAll('div');
                 
+                if (items.length > 0) {
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault();
+                        currentSuggestionIndex++;
+                        highlightSuggestion('customSuggestions');
+                        return;
+                    }
+                    if (event.key === 'ArrowUp') {
+                        event.preventDefault();
+                        currentSuggestionIndex--;
+                        highlightSuggestion('customSuggestions');
+                        return;
+                    }
+                    if (event.key === 'Enter') {
+                        // Если пользователь выбрал пункт стрелочками — применяем его
+                        if (currentSuggestionIndex >= 0 && currentSuggestionIndex < items.length) {
+                            event.preventDefault();
+                            items[currentSuggestionIndex].click(); // Эмулируем клик для заполнения поля
+                            return;
+                        }
+                    }
+                }
+            }
+
+            // --- СТАНДАРТНОЕ ЗАКРЫТИЕ ПО ESCAPE ---
+            if (event.key === 'Escape') {
                 if (addModal && !addModal.classList.contains('hidden')) closeModal();
                 if (detailsModal && !detailsModal.classList.contains('hidden')) closeProductDetailsModal();
                 if (settingsModal && !settingsModal.classList.contains('hidden')) closeSettingsModal();
@@ -1031,12 +1090,8 @@
                 if (editRecModal && !editRecModal.classList.contains('hidden')) closeEditRecipeModal();
             }
             
+            // --- СТАНДАРТНОЕ СОХРАНЕНИЕ ПО ENTER ---
             if (event.key === 'Enter') {
-                const addModal = document.getElementById('addProductModal');
-                const detailsModal = document.getElementById('productDetailsModal');
-                const recipeModal = document.getElementById('addRecipeModal');
-                const editRecModal = document.getElementById('editRecipeModal');
-                
                 if (addModal && !addModal.classList.contains('hidden')) { event.preventDefault(); addProduct(); }
                 if (detailsModal && !detailsModal.classList.contains('hidden')) { event.preventDefault(); saveProductDetails(); }
                 if (recipeModal && !recipeModal.classList.contains('hidden')) { event.preventDefault(); saveCustomRecipe(); }
