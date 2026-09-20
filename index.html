@@ -40,6 +40,8 @@
         .list-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; justify-content: flex-start; }
         .product-card { position: relative; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; shadow: 0 1px 2px 0 rgba(0,0,0,0.05); width: 4rem; transition: all 0.2s; box-sizing: border-box; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+        .product-spoiled { background-color: #fef2f2 !important; border-color: #f87171 !important; box-shadow: inset 0 0 0 1px #f87171; }
+        .text-spoiled { color: #dc2626 !important; font-weight: 800 !important; font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.05em; }
         .product-expiring { background-color: #fff1f2; border-color: #fca5a5; }
         .product-warning { background-color: #fff7ed; border-color: #fed7aa; }
         .text-orange { color: #ea580c; font-weight: 700; }
@@ -673,13 +675,15 @@
         function createProductCard(item) {
             const card = document.createElement('div');
             
-            // Динамически определяем степень критичности срока годности на основе настроек пользователя
-            const isRed = item.daysLeft <= expiryRedDays;
-            const isOrange = !isRed && item.daysLeft <= expiryOrangeDays;
+            // Динамически определяем степень критичности срока годности на основе настроек
+            const isSpoiled = item.daysLeft <= 0; // Испорчен, если 0 или меньше дней
+            const isRed = !isSpoiled && item.daysLeft <= expiryRedDays;
+            const isOrange = !isSpoiled && !isRed && item.daysLeft <= expiryOrangeDays;
             
             let cardClass = 'product-card';
-            if (isRed) cardClass += ' product-expiring';
-            if (isOrange) cardClass += ' product-warning';
+            if (isSpoiled) cardClass += ' product-spoiled';
+            else if (isRed) cardClass += ' product-expiring';
+            else if (isOrange) cardClass += ' product-warning';
             
             card.className = cardClass;
             
@@ -688,16 +692,22 @@
             card.setAttribute('data-id', item.id);
             card.onclick = () => openProductDetailsModal(item.id);
             
-            // Настраиваем цвет текста дней
-            let daysClass = 'product-days';
-            if (isRed) daysClass += ' text-rose';
-            if (isOrange) daysClass += ' text-orange';
+            // Настраиваем правый текстовый блок (дни или статус)
+            let daysHTML = '';
+            if (isSpoiled) {
+                daysHTML = `<span class="text-spoiled">Испорчен 🦠</span>`;
+            } else {
+                let daysClass = 'product-days';
+                if (isRed) daysClass += ' text-rose';
+                if (isOrange) daysClass += ' text-orange';
+                daysHTML = `<span class="${daysClass}">${item.daysLeft} дн.</span>`;
+            }
 
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 ? `<span class="product-badge">${item.qty}</span>` : ''}
-                <span class="${daysClass}">${item.daysLeft} дн.</span>
+                ${item.qty > 1 ? `<span class="product-badge">\${item.qty}</span>` : ''}
+                ${daysHTML}
             `;
             return card;
         }
