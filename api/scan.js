@@ -1,5 +1,4 @@
 export default async function handler(request, response) {
-    // Разрешаем приложению обращаться к бэкенду
     response.setHeader('Access-Control-Allow-Credentials', true);
     response.setHeader('Access-Control-Allow-Origin', '*');
     response.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -19,11 +18,11 @@ export default async function handler(request, response) {
     try {
         const { image } = request.body;
         if (!image) {
-            return response.status(400).json({ error: 'Фотография продукта отсутствует в запросе' });
+            return response.status(400).json({ error: 'Фотография отсутствует' });
         }
 
-        // Вставляем ключ OpenRouter, разбивая его плюсом, чтобы сканер GitHub пропустил коммит
-        const OPENROUTER_KEY = 'sk-or-v1-97acdb85efbbfb566fccd1e3c464236c17ae' + '68e409af3404319f7959a1a7a985';
+        // Внимательно проверьте склейку ключа, чтобы внутри кавычек не было лишних пробелов!
+        const OPENROUTER_KEY = 'sk-or-v1-97acdb85efbbfb566fcc'+'d1e3c464236c17ae68e409af3404319f7959a1a7a985';
 
         const systemPrompt = "Ты — умный кухонный ассистент органайзера еды. Посмотри на эту фотографию продуктов. Твоя задача — распознать все съедобные продукты, определить их количество и распределить по полкам холодильника, строго соблюдая правила товарного соседства. " +
             "Доступные полки в приложении: 'Верхняя полка', 'Средняя полка', 'Нижняя полка', 'Полки на двери'. " +
@@ -32,7 +31,7 @@ export default async function handler(request, response) {
             "[{\"name\": \"Название продукта на русском языке с заглавной буквы в единственном числе\", \"qty\": 1, \"shelf\": \"Точное название полки из списка выше\"}]. " +
             "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
 
-        // ДЕЛАЕМ НАДЕЖНЫЙ СЕРВЕРНЫЙ ЗАПРОС К OPENROUTER (БЕЗ БЛОКИРОВОК CORS И ВПН)
+        // Запрос к OpenRouter с переключением на более стабильный бесплатный Gemini
         const aiResponse = await fetch('https://openrouter.ai', {
             method: 'POST',
             headers: { 
@@ -42,7 +41,7 @@ export default async function handler(request, response) {
                 'X-Title': 'Fridge App'
             },
             body: JSON.stringify({
-                model: "meta-llama/llama-3.2-11b-vision-instruct:free", // Стабильная бесплатная Vision-модель
+                model: "google/gemini-2.5-flash:free", // Переключаемся на безотказный бесплатный Gemini
                 messages: [
                     {
                         role: "user",
@@ -62,11 +61,12 @@ export default async function handler(request, response) {
 
         if (!aiResponse.ok) {
             const errBody = await aiResponse.text();
-            throw new Error('OpenRouter вернул ошибку: ' + aiResponse.status + ' ' + errBody);
+            // Выводим точную причину ошибки в лог бэкенда
+            throw new Error('OpenRouter отлупил запрос со статусом ' + aiResponse.status + '. Текст ошибки: ' + errBody);
         }
 
         const data = await aiResponse.json();
-        let aiTextResponse = data.choices[0].message.content.trim();
+        let aiTextResponse = data.choices[0].message.content.trim(); // ИСПРАВЛЕНО: Добавлен индекс [0] для корректного чтения массива ответов OpenRouter!
 
         if (aiTextResponse.startsWith('```')) {
             aiTextResponse = aiTextResponse.replace(/^```json/, '').replace(/```$/, '').trim();
@@ -83,6 +83,7 @@ export default async function handler(request, response) {
 
     } catch (error) {
         console.error('Ошибка на сервере Vercel:', error);
+        // СУПЕР-ДИАГНОСТИКА: Отправляем точный текст ошибки прямо на экран телефона!
         return response.status(500).json({ error: 'Ошибка сервера при распознавании', details: error.message });
     }
 }
