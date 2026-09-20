@@ -629,37 +629,35 @@
             });
 
             // ЧЁТКАЯ ПРАВКА: Если выбран режим "По расположению" (classic), мы рисуем сгруппированные зоны и полки
+            // В режиме "По расположению" (classic) выводим полки напрямую в контейнер без серых плашек
             if (currentMode === 'classic') {
                 groups.forEach(group => {
-                    const groupDiv = document.createElement('div');
-                    groupDiv.style.marginBottom = '2rem';
-                    groupDiv.style.backgroundColor = '#f8fafc';
-                    groupDiv.style.borderRadius = '1rem';
-                    groupDiv.style.padding = '1rem';
-                    groupDiv.style.border = '1px solid #e2e8f0';
+                    // Создаем только лаконичный заголовок зоны
+                    const titleDiv = document.createElement('div');
+                    titleDiv.style.margin = '1rem 0 0.5rem 0';
+                    titleDiv.innerHTML = `<h3 style="font-size: 0.85rem; font-weight: 800; color: #4f46e5; margin: 0; text-transform: uppercase; letter-spacing: 0.05em;">${group.name}</h3>`;
+                    container.appendChild(titleDiv);
                     
-                    groupDiv.innerHTML = `<h3 style="font-size: 0.95rem; font-weight: 800; color: #4f46e5; margin-top: 0; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">${group.name}</h3>`;
-                    
+                    // Выводим полки этой зоны напрямую в главный контейнер
                     group.shelves.forEach(shelfName => {
                         const shelfItems = displayItems.filter(item => item.shelf === shelfName);
                         
                         const shelfDiv = document.createElement('div');
                         shelfDiv.className = 'shelf-section';
+                        shelfDiv.style.marginBottom = '0.75rem'; // Минимальный компактный отступ между полками
                         shelfDiv.innerHTML = `
-                            <h4 class="shelf-title" style="color: #64748b; font-size: 0.75rem;">${shelfName}</h4>
+                            <h4 class="shelf-title" style="color: #64748b; font-size: 0.75rem; margin-bottom: 0.25rem;">${shelfName}</h4>
                             <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
                                 ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                             </div>
                         `;
                         const shelfList = shelfDiv.querySelector('.shelf-border');
-                        // В режиме "По расположению" продукты на полках показываются просто в порядке их добавления
                         shelfItems.forEach(item => { shelfList.appendChild(createProductCard(item)); });
-                        groupDiv.appendChild(shelfDiv);
+                        container.appendChild(shelfDiv);
                     });
-                    
-                    container.appendChild(groupDiv);
                 });
-            } else {
+            }
+             else {
                 // ИНАЧЕ: Если выбраны Срок, Алфавит или Дата — мы применяем сортировку КО ВСЕМ продуктам сразу
                 if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
                 else if (currentMode === 'alpha') { displayItems.sort((a, b) => a.name.localeCompare(b.name, 'ru')); } // Сортировка с поддержкой русского языка
