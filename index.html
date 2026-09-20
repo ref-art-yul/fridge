@@ -188,7 +188,8 @@
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
                     <!-- Плавающий контейнер подсказок для окна редактирования рецепта -->
-                    <div id="recipeEditSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.5rem;"></div>
+                                        <!-- Плавающий компактный контейнер подсказок для окна редактирования рецепта -->
+                    <div id="recipeEditSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 13.5rem; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 2.1rem; box-sizing: border-box;"></div>
                     <div id="editRecipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
                     
                     <button onclick="addIngredientRowToEditForm()" style="width: 100%; padding: 0.4rem; background-color: transparent; color: #4f46e5; border: 1px dashed #4f46e5; border-radius: 0.5rem; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Добавить ингредиент</button>
@@ -230,7 +231,8 @@
                 <div style="display: flex !important; flex-direction: column !important; width: 100% !important; align-items: flex-start !important; margin-top: 0.25rem;">
                     <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Ингредиенты</label>
                     <!-- Плавающий контейнер подсказок для окна создания рецепта -->
-                    <div id="recipeAddSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: calc(100% - 3rem); max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 3.5rem;"></div>
+                                        <!-- Плавающий компактный контейнер подсказок для окна создания рецепта -->
+                    <div id="recipeAddSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 13.5rem; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 2.1rem; box-sizing: border-box;"></div>
                     <div id="recipeIngredientsListContainer" style="display: flex; flex-direction: column; gap: 0.5rem; width: 100%; max-height: 10rem; overflow-y: auto; padding-right: 0.25rem; margin-bottom: 0.5rem;"></div>
                     
                     <!-- Кнопка добавления строчки ингредиента -->
