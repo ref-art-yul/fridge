@@ -21,6 +21,12 @@
             .header-history-block { order: 2 !important; }
         }
 
+        /* Анимация вращения ИИ-лоадера */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
         /* Убираем дефолтные стрелочки у всех input type="number" */
         input[type="number"]::-webkit-outer-spin-button,
         input[type="number"]::-webkit-inner-spin-button {
@@ -139,6 +145,18 @@
 
                 <!-- БЛОК 2: Элементы фильтрации и настроек -->
                 <div class="header-filter-block" style="display: flex; align-items: center; gap: 0.5rem; order: 3; justify-content: flex-end;">
+                    
+                    <!-- Скрытый системный инпут, который открывает камеру на смартфонах -->
+                    <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleCameraFile(this)" style="display: none;">
+
+                    <!-- Кнопка ИИ-Сканирования 📸 -->
+                    <button onclick="document.getElementById('cameraInput').click()" style="display: flex; align-items: center; justify-content: center; padding: 0.4rem 0.5rem; background-color: #e0e7ff; border: 1px solid #c7d2fe; border-radius: 0.5rem; cursor: pointer; color: #4f46e5; flex-shrink: 0; transition: all 0.2s;" onmouseover="this.style.backgroundColor='#c7d2fe'" onmouseout="this.style.backgroundColor='#e0e7ff'" title="Сканировать продукты через ИИ">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                            <circle cx="12" cy="13" r="4"></circle>
+                        </svg>
+                    </button>
+                    
                     <!-- Выпадашка сортировки -->
                     <select id="sortSelect" class="adaptive-sort-select" onchange="setSortMode(this.value)" style="border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.4rem 0.5rem; font-size: 0.85rem; font-weight: 500; color: #475569; background-color: #f1f5f9; outline: none; cursor: pointer;">
                         <option value="classic">По расположению</option>
@@ -254,6 +272,20 @@
                     <button onclick="closeAddRecipeModal()" class="btn-cancel" style="flex: 1; padding: 0.625rem 0; background-color: #f1f5f9; color: #475569; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Отмена</button>
                     <button onclick="saveCustomRecipe()" class="btn-submit" style="flex: 1; padding: 0.625rem 0; background-color: #4f46e5; color: #ffffff; font-weight: 500; border-radius: 0.5rem; border: none; cursor: pointer; font-size: 0.875rem;">Сохранить</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Модальное окно ожидания сканирования ИИ -->
+        <div id="aiLoadingModal" class="modal-overlay hidden" style="background-color: rgba(15, 23, 42, 0.6) !important;">
+            <div style="background-color: #ffffff; padding: 2rem; border-radius: 1rem; width: 100%; max-width: 20rem; box-sizing: border-box; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);">
+                <!-- Анимированный крутящийся лоадер -->
+                <div style="width: 3rem; height: 3rem; border: 4px solid #e0e7ff; border-top-color: #4f46e5; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <h3 style="font-size: 1.1rem; font-weight: 800; color: #0f172a; margin: 0; display: flex; align-items: center; gap: 0.35rem; justify-content: center;">
+                    ✨ ИИ распознаёт продукты...
+                </h3>
+                <p style="font-size: 0.85rem; color: #64748b; margin: 0; line-height: 1.4;">
+                    Пожалуйста, подождите несколько секунд. Нейросеть изучает снимок и раскладывает еду по полкам.
+                </p>
             </div>
         </div>
 
@@ -2335,6 +2367,26 @@
 
         // Запускаем автоматическую смену каждые 2.5 секунды (2500 мс)
         setInterval(animatePlaceholdersLoop, 2500);
+
+        // ЭТАП 1: Обработка сделанного снимка с камеры
+        function handleCameraFile(inputElement) {
+            if (!inputElement.files || inputElement.files.length === 0) return;
+            
+            const file = inputElement.files[0];
+            
+            // Открываем модальное окно ожидания ИИ
+            const aiModal = document.getElementById('aiLoadingModal');
+            if (aiModal) aiModal.classList.remove('hidden');
+
+            console.log("Фотография успешно получена:", file.name, file.size, "байт");
+
+            // ВРЕМЕННАЯ ЗАГЛУШКА ДЛЯ ТЕСТА: имитируем работу нейросети 3 секунды и закрываем окно
+            setTimeout(() => {
+                if (aiModal) aiModal.classList.add('hidden');
+                inputElement.value = ''; // Очищаем инпут камеры для следующего снимка
+                alert("Этап 1 успешно пройден! Интерфейс камеры работает, картинка поймана скриптом.");
+            }, 3000);
+        }
 
         render();
     </script>
