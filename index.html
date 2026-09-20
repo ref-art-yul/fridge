@@ -100,7 +100,7 @@
         <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
         <header>
             <div class="header-top">
-                <h1 id="appTitle">
+                <h1 id="appTitle"><span>❄️</span> Холодильник</h1>
                     <!-- Заменяем SVG-иконку на встроенный смайлик, чтобы не зависеть от Lucide -->
                     <span> fridge </span> Холодильник
                 </h1>
@@ -460,7 +460,7 @@
         let groups = JSON.parse(localStorage.getItem('my_fridge_groups')) || [
             {
                 id: 'g1',
-                name: 'Холодильное отделение',
+                name: 'Холодильная камера',
                 shelves: ['Верхняя полка', 'Средняя полка', 'Нижняя полка', 'Полки на двери']
             },
             {
@@ -572,7 +572,7 @@
             });
 
             if (screen === 'fridge') {
-                title.innerHTML = '<span>🥛</span> Холодильник';
+                title.innerHTML = '<span>❄️</span> Холодильник';
                 filterBar.classList.remove('hidden');
                 addBtn.classList.remove('hidden');
                 if (navFridge) navFridge.className = "nav-btn nav-active";
