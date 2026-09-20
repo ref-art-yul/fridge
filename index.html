@@ -38,10 +38,10 @@
         .shelf-border { border-bottom: 8px solid #cbd5e1; min-height: 96px; background-color: rgba(248,250,252,0.6); border-radius: 0.75rem 0.75rem 0 0; padding: 0.75rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; }
         .shelf-hover { background-color: rgba(79, 70, 229, 0.15) !important; border-color: #4f46e5 !important; }
         .list-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; justify-content: flex-start; }
-        .product-card { display: flex; align-items: center; justify-content: space-between; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.75rem 1rem; cursor: pointer; transition: all 0.2s; position: relative; gap: 0.5rem; box-sizing: border-box; height: 3.2rem; }
+        .product-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; transition: all 0.2s; position: relative; gap: 0.35rem; box-sizing: border-box; height: 6.8rem; width: 100%; text-align: center; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .product-spoiled { background-color: #fff1f2 !important; border-color: #fca5a5 !important; }
-        .spoiled-sticker { background-color: #ef4444; color: #ffffff; font-size: 0.6rem; font-weight: 500; padding: 0.25rem 0.5rem; border-radius: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2); height: 1.35rem; box-sizing: border-box; }
+        .spoiled-sticker { background-color: #ef4444; color: #ffffff; font-size: 0.6rem; font-weight: 500; padding: 0.2rem 0.5rem; border-radius: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2); height: 1.25rem; box-sizing: border-box; margin: 0; }
         .text-spoiled { color: #dc2626 !important; font-weight: 800 !important; font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.05em; }
         .product-expiring { background-color: #fff1f2; border-color: #fca5a5; }
         .product-warning { background-color: #fff7ed; border-color: #fed7aa; }
@@ -712,12 +712,12 @@
             }
 
             card.innerHTML = `
-                <div style="display: flex; align-items: center; gap: 0.5rem; min-width: 0; flex-grow: 1; margin-right: 0.5rem;">
-                    <span class="product-emoji">${getEmoji(item.name)}</span>
-                    <span class="product-name" style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.name}</span>
-                    ${badgeHTML}
+                <span class="product-emoji" style="font-size: 1.5rem; line-height: 1;">${getEmoji(item.name)}</span>
+                <span class="product-name" style="font-size: 0.85rem; font-weight: 600; color: #334155; display: block; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin: 0;">${item.name}</span>
+                ${badgeHTML}
+                <div style="margin-top: auto; display: flex; justify-content: center; width: 100%; min-height: 1.25rem; align-items: center;">
+                    ${daysHTML}
                 </div>
-                ${daysHTML}
             `;
             return card;
         }
