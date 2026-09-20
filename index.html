@@ -290,7 +290,9 @@
                     <!-- Поле Названия (занимает всё свободное место) -->
                     <div style="flex: 1; display: flex; flex-direction: column; align-items: flex-start;">
                         <label class="form-label" style="display: block; font-size: 0.75rem; font-weight: 600; color: #64748b; text-transform: uppercase; margin-bottom: 0.25rem;">Название</label>
-                        <input type="text" id="detailsName" class="form-input" style="width: 100%; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.625rem; box-sizing: border-box; font-size: 0.875rem;">
+                        <!-- Плавающий контейнер подсказок для окна редактирования продукта -->
+                        <div id="productDetailsSuggestions" class="hidden" style="position: absolute; background: white; border: 1px solid #e2e8f0; width: 13.5rem; max-height: 10rem; overflow-y: auto; z-index: 999; box-shadow: 0 4px 10px rgba(0,0,0,0.15); border-radius: 0.5rem; margin-top: 1.85rem; box-sizing: border-box;"></div>
+                        <input type="text" id="detailsName" oninput="showProductDetailsSuggestions(this.value, this)" onclick="showProductDetailsSuggestions(this.value, this)" class="form-input" style="width: 100% !important; display: block !important;">
                     </div>
                     
                     <!-- Удобный горизонтальный счетчик количества -->
@@ -906,7 +908,7 @@
 
             // Сдвигаем контейнер подсказок по высоте в зависимости от того, где находится инпут
             // ЧЁТКАЯ ПРАВКА: Корректируем высоту, убирая лишний внутренний отступ строки
-            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight - 20) + 'px';
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight - 24) + 'px';
 
             filtered.forEach(item => {
                 const div = document.createElement('div');
@@ -962,6 +964,47 @@
                     validateRecipeIngredients('form-ingredient-row-edit', 'edit-rec-ing-name');
                     
                     const qtyInp = inputElement.parentElement.querySelector('.edit-rec-ing-qty');
+                    if (qtyInp) qtyInp.focus();
+                };
+                container.appendChild(div);
+            });
+        }
+
+        let activeProductDetailsInput = null;
+
+        function showProductDetailsSuggestions(value, inputElement) {
+            const container = document.getElementById('productDetailsSuggestions');
+            if (!container) return;
+            
+            activeProductDetailsInput = inputElement;
+            currentSuggestionIndex = -1;
+            
+            const searchStr = value.toLowerCase().trim();
+            if (searchStr.length === 0) { container.classList.add('hidden'); return; }
+            
+            const filtered = userCatalog.filter(item => item.name.toLowerCase().includes(searchStr));
+            if (filtered.length === 0) { container.classList.add('hidden'); return; }
+            
+            container.innerHTML = '';
+            container.classList.remove('hidden');
+
+            // Прижимаем выпадашку ровно к инпуту в карточке товара
+            container.style.top = (inputElement.offsetTop + inputElement.offsetHeight - 24) + 'px';
+
+            filtered.forEach(item => {
+                const div = document.createElement('div');
+                div.textContent = item.emoji + ' ' + item.name;
+                div.style.padding = '0.5rem 0.75rem';
+                div.style.cursor = 'pointer';
+                div.style.fontSize = '0.875rem';
+                div.onmouseover = () => div.style.backgroundColor = '#f1f5f9';
+                div.onmouseout = () => div.style.backgroundColor = 'transparent';
+                div.onclick = () => {
+                    inputElement.value = item.name;
+                    container.classList.add('hidden');
+                    
+                    // Переводим фокус на кнопки количества
+                    const qtyInp = document.getElementById('detailsQty');
                     if (qtyInp) qtyInp.focus();
                 };
                 container.appendChild(div);
@@ -1182,6 +1225,7 @@
         function closeProductDetailsModal() {
             document.getElementById('productDetailsModal').classList.add('hidden');
             activeEditingProductId = null;
+            document.getElementById('productDetailsSuggestions').classList.add('hidden');
         }
 
         function changeDetailsShelf(shelfName) {
@@ -1255,10 +1299,21 @@
             const isRecEditSugsOpen = recEditSugs && !recEditSugs.classList.contains('hidden');
 
             // --- НАВИГАЦИЯ СТРЕЛОЧКАМИ ПО ПОДСКАЗКАМ (ХОЛОДИЛЬНИК И РЕЦЕПТЫ) ---
-            if ((isProdSugsOpen || isRecAddSugsOpen || isRecEditSugsOpen) && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
-                // Определяем, какой именно контейнер сейчас активен
+            // Находим все четыре контейнера подсказок
+            const prodSugs = document.getElementById('customSuggestions');
+            const prodDetailsSugs = document.getElementById('productDetailsSuggestions');
+            const recAddSugs = document.getElementById('recipeAddSuggestions');
+            const recEditSugs = document.getElementById('recipeEditSuggestions');
+
+            const isProdSugsOpen = prodSugs && !prodSugs.classList.contains('hidden');
+            const isProdDetailsSugsOpen = prodDetailsSugs && !prodDetailsSugs.classList.contains('hidden');
+            const isRecAddSugsOpen = recAddSugs && !recAddSugs.classList.contains('hidden');
+            const isRecEditSugsOpen = recEditSugs && !recEditSugs.classList.contains('hidden');
+
+            if ((isProdSugsOpen || isProdDetailsSugsOpen || isRecAddSugsOpen || isRecEditSugsOpen) && (event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
                 let activeContainer = prodSugs;
                 let activeContainerId = 'customSuggestions';
+                if (isProdDetailsSugsOpen) { activeContainer = prodDetailsSugs; activeContainerId = 'productDetailsSuggestions'; }
                 if (isRecAddSugsOpen) { activeContainer = recAddSugs; activeContainerId = 'recipeAddSuggestions'; }
                 if (isRecEditSugsOpen) { activeContainer = recEditSugs; activeContainerId = 'recipeEditSuggestions'; }
 
@@ -1317,6 +1372,20 @@
             if (event.target === settingsModal) closeSettingsModal();
             if (event.target === recipeModal) closeAddRecipeModal();
             if (event.target === editRecModal) closeEditRecipeModal();
+
+            // ЗАКРЫТИЕ ВЫПАДАШЕК ПРИ ПОТЕРЕ ФОКУСА (если кликнули не по инпуту и не по самой выпадашке)
+            if (!event.target.closest('#prodName') && !event.target.closest('#customSuggestions')) {
+                document.getElementById('customSuggestions')?.classList.add('hidden');
+            }
+            if (!event.target.closest('.rec-ing-name') && !event.target.closest('#recipeAddSuggestions')) {
+                document.getElementById('recipeAddSuggestions')?.classList.add('hidden');
+            }
+            if (!event.target.closest('.edit-rec-ing-name') && !event.target.closest('#recipeEditSuggestions')) {
+                document.getElementById('recipeEditSuggestions')?.classList.add('hidden');
+            }
+            if (!event.target.closest('#detailsName') && !event.target.closest('#productDetailsSuggestions')) {
+                document.getElementById('productDetailsSuggestions')?.classList.add('hidden');
+            }
         });
 
         // АВТОМАТИЧЕСКАЯ ГЕНЕРАЦИЯ КНОПОК ПОЛОК ДЛЯ ОКНА ДОБАВЛЕНИЯ И РЕДАКТИРОВАНИЯ
