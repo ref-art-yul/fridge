@@ -31,38 +31,70 @@ export default async function handler(request, response) {
             "[{\"name\": \"Название продукта на русском языке с заглавной буквы в единственном числе\", \"qty\": 1, \"shelf\": \"Точное название полки из списка выше\"}]. " +
             "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
 
-        // Запрос к OpenRouter с переключением на более стабильный бесплатный Llama
-        const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + OPENROUTER_KEY,
-                'HTTP-Referer': 'https://vercel.app',
-                'X-Title': 'Fridge App'
-            },
-            body: JSON.stringify({
-                    model: "meta-llama/llama-3.2-11b-vision-instruct:free", // Переключаемся на безотказный бесплатный Llama
-                messages: [
-                    {
-                        role: "user",
-                        content: [
-                            { type: "text", text: systemPrompt },
+        // БРОНЕБОЙНЫЙ СПИСОК БЕСПЛАТНЫХ VISION-МОДЕЛЕЙ (Перебираются сверху вниз до первого успеха)
+        const modelsToTry = [
+            "meta-llama/llama-3.2-90b-vision-instruct:free",
+            "google/gemini-1.5-flash:free",
+            "google/gemini-2.5-flash:free",
+            "meta-llama/llama-3.2-11b-vision-instruct:free",
+            "qwen/qwen-2.5-vl-7b-instruct:free"
+        ];
+
+
+        let aiResponse = null;
+        let lastErrorDetails = "";
+
+        // Запускаем цикл перебора моделей
+        for (const currentModel of modelsToTry) {
+            try {
+                console.log("Пробуем отправить запрос в модель:", currentModel);
+                
+                // ВНИМАНИЕ: Здесь строго прописан абсолютно полный и точный адрес ИИ-шлюза!
+                aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + OPENROUTER_KEY,
+                        'HTTP-Referer': 'https://vercel.app',
+                        'X-Title': 'Fridge App'
+                    },
+                    body: JSON.stringify({
+                        model: currentModel,
+                        messages: [
                             {
-                                type: "image_url",
-                                image_url: {
-                                    url: "data:image/jpeg;base64," + image
-                                }
+                                role: "user",
+                                content: [
+                                    { type: "text", text: systemPrompt },
+                                    {
+                                        type: "image_url",
+                                        image_url: {
+                                            url: "data:image/jpeg;base64," + image
+                                        }
+                                    }
+                                ]
                             }
                         ]
-                    }
-                ]
-            })
-        });
+                    })
+                });
 
-        if (!aiResponse.ok) {
-            const errBody = await aiResponse.text();
-            // Выводим точную причину ошибки в лог бэкенда
-            throw new Error('OpenRouter отлупил запрос со статусом ' + aiResponse.status + '. Текст ошибки: ' + errBody);
+                // Если модель успешно ответила (статус 200), прерываем цикл перебора и идем дальше
+                if (aiResponse.ok) {
+                    console.log("Успешный ответ получен от модели:", currentModel);
+                    break;
+                } else {
+                    const errText = await aiResponse.text();
+                    lastErrorDetails += `[${currentModel}]: Статус ${aiResponse.status} - ${errText}; `;
+                    aiResponse = null; // Сбрасываем, чтобы цикл шел дальше
+                }
+            } catch (err) {
+                lastErrorDetails += `[${currentModel}]: Ошибка сети - ${err.message}; `;
+                aiResponse = null;
+            }
+        }
+
+        // Если после перебора всех моделей мы так и не получили успешный ответ
+        if (!aiResponse) {
+            throw new Error('Все бесплатные модели OpenRouter временно недоступны или выдали 404. Подробности: ' + lastErrorDetails);
         }
 
         const data = await aiResponse.json();
