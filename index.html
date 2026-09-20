@@ -1142,43 +1142,53 @@
             const nameInput = document.getElementById('prodName');
             let rawName = nameInput.value.trim();
             if (!rawName) return alert('Напишите название продукта!');
+            
             // Превращаем первую букву в заглавную, а остальные оставляем как есть
             const name = rawName.charAt(0).toUpperCase() + rawName.slice(1);
-            addToCatalog(name); // Сохраняем имя в глобальный словарь пользователя
+            
+            // Сохраняем имя в глобальный словарь пользователя
+            addToCatalog(name); 
+            
             const qty = parseInt(document.getElementById('prodQty').value) || 1;
             const shelf = selectedShelf;
-            const daysLeft = parseInt(document.getElementById('prodDays').value) || 5;
+            
+            // Считываем то, что введено в инпут на экране
+            let daysLeft = parseInt(document.getElementById('prodDays').value);
+            if (isNaN(daysLeft) || daysLeft < 0) daysLeft = 5;
 
-            if (!name) return alert('Напишите название продукта!');
-            // Если пользователь ввел точное имя из базы руками, подхватываем его дефолтные дни перед записью
-            const matchedCatalog = userCatalog.find(c => c.name.toLowerCase().trim() === rawName.toLowerCase().trim());
+            // УМНАЯ ПОДСТАНОВКА: Если этот продукт есть в базе Профиля, берем его персональный срок
+            const matchedCatalog = userCatalog.find(c => c.name.toLowerCase().trim() === name.toLowerCase().trim());
             if (matchedCatalog && matchedCatalog.defaultDays !== undefined) {
                 daysLeft = matchedCatalog.defaultDays;
             }
+
             saveState();
             
-            // ЧЁТКАЯ ПРАВКА: Ищем совпадение по имени, полке И сроку годности одновременно
+            // Ищем совпадение по имени, полке И сроку годности одновременно
             const existing = products.find(p => 
                 p.name.toLowerCase() === name.toLowerCase() && 
                 p.shelf === shelf &&
                 p.daysLeft === daysLeft
             );
 
-            if (existing) { existing.qty += qty; } 
-            else { 
+            if (existing) { 
+                existing.qty += qty; 
+            } else { 
                 products.push({ 
                     id: Date.now(), 
                     name, 
                     qty, 
                     shelf, 
                     initialDays: daysLeft, // Запоминаем, сколько дней было изначально
-                    createdAt: Date.now()  // Запоминаем точную дату и время добавления в миллисекундах
+                    createdAt: Date.now()  // Запоминаем точную дату добавления
                 }); 
             }
 
+            // Очищаем поля и возвращаем дефолтные настройки для следующего открытия
             nameInput.value = '';
             document.getElementById('prodQty').value = '1';
             document.getElementById('prodDays').value = '5';
+            
             closeModal();
             render();
         }
