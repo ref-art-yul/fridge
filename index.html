@@ -586,7 +586,7 @@
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 ? `<span class="product-badge">\${item.qty}</span>` : ''}
+                ${item.qty > 1 ? `<span class="product-badge">${item.qty}</span>` : ''}
                 <span class="${daysClass}">${item.daysLeft} дн.</span>
             `;
             return card;
