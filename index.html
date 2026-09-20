@@ -2144,6 +2144,25 @@
             render();
         }
 
+        // АВТОМАТИЧЕСКИЙ ЛЕКАРЬ БАЗЫ: Исправляем старые аномальные минусы (-20700 дней) у пользователя
+        if (products && products.length > 0) {
+            let isDatabaseFixed = false;
+            
+            products.forEach(item => {
+                // Если у продукта аномальный срок (меньше года в минусе) или слетела дата создания
+                if (item.daysLeft < -365 || !item.createdAt || item.createdAt < 100000) {
+                    item.createdAt = Date.now();
+                    item.initialDays = item.daysLeft > 0 ? item.daysLeft : 5; // Даем дефолтные 5 дней, если срок был сломан
+                    item.daysLeft = item.initialDays;
+                    isDatabaseFixed = true;
+                }
+            });
+            
+            if (isDatabaseFixed) {
+                localStorage.setItem('my_fridge_items', JSON.stringify(products));
+            }
+        }
+
         render();
     </script>
 </body>
