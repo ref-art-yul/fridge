@@ -1878,7 +1878,7 @@
             // Всегда сортируем каталог по алфавиту перед выводом
             userCatalog.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
 
-            userCatalog.forEach((catalogName, index) => {
+            userCatalog.forEach((catalogItem, index) => {
                 const item = document.createElement('div');
                 item.style.display = 'flex';
                 item.style.alignItems = 'center';
