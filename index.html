@@ -111,11 +111,12 @@
             
             <div id="filterBar" style="display: flex; gap: 0.5rem; align-items: center; justify-content: space-between; margin-top: 0.5rem; font-size: 0.875rem; width: 100%;">
                 <!-- Компактная выпадашка для всех видов сортировки -->
+                <!-- Обновленная выпадашка сортировки по вашему ТЗ -->
                 <select id="sortSelect" onchange="setSortMode(this.value)" style="flex: 1; max-width: 14rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; padding: 0.375rem 0.5rem; font-size: 0.85rem; font-weight: 500; color: #475569; background-color: #f1f5f9; outline: none; cursor: pointer;">
-                    <option value="classic">Полкам (Стандарт)</option>
+                    <option value="classic">По расположению</option>
                     <option value="expiry">По сроку годности ⌛</option>
-                    <option value="alpha">По алфавиту 🔤</option>
                     <option value="newest">По дате добавления 🆕</option>
+                    <option value="alpha">По алфавиту 🔤</option>
                 </select>
 
                 <div style="display: flex; gap: 0.4rem; align-items: center;">
@@ -504,14 +505,8 @@
                 });
             }
 
-            if (currentMode === 'expiry') {
-                if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
-            else if (currentMode === 'alpha') { displayItems.sort((a, b) => a.name.localeCompare(b.name)); }
-            else if (currentMode === 'newest') { displayItems.sort((a, b) => b.id - a.id); } // Показывает сначала новые по ID
-            }
-
+            // ЧЁТКАЯ ПРАВКА: Если выбран режим "По расположению" (classic), мы рисуем сгруппированные зоны и полки
             if (currentMode === 'classic') {
-                // Идём по группам (зонам)
                 groups.forEach(group => {
                     const groupDiv = document.createElement('div');
                     groupDiv.style.marginBottom = '2rem';
@@ -522,18 +517,19 @@
                     
                     groupDiv.innerHTML = `<h3 style="font-size: 0.95rem; font-weight: 800; color: #4f46e5; margin-top: 0; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">${group.name}</h3>`;
                     
-                    // Внутри группы идём по её полкам
                     group.shelves.forEach(shelfName => {
                         const shelfItems = displayItems.filter(item => item.shelf === shelfName);
+                        
                         const shelfDiv = document.createElement('div');
                         shelfDiv.className = 'shelf-section';
                         shelfDiv.innerHTML = `
                             <h4 class="shelf-title" style="color: #64748b; font-size: 0.75rem;">${shelfName}</h4>
                             <div class="shelf-border" data-shelf="${shelfName}" ondragover="event.preventDefault(); this.classList.add('shelf-hover');" ondragleave="this.classList.remove('shelf-hover');" ondrop="handleProductDrop(event, '${shelfName}')">
-                                ${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
+                                \${shelfItems.length === 0 ? '<span class="empty-shelf">Полка пуста</span>' : ''}
                             </div>
                         `;
                         const shelfList = shelfDiv.querySelector('.shelf-border');
+                        // В режиме "По расположению" продукты на полках показываются просто в порядке их добавления
                         shelfItems.forEach(item => { shelfList.appendChild(createProductCard(item)); });
                         groupDiv.appendChild(shelfDiv);
                     });
@@ -541,6 +537,12 @@
                     container.appendChild(groupDiv);
                 });
             } else {
+                // ИНАЧЕ: Если выбраны Срок, Алфавит или Дата — мы применяем сортировку КО ВСЕМ продуктам сразу
+                if (currentMode === 'expiry') { displayItems.sort((a, b) => a.daysLeft - b.daysLeft); } 
+                else if (currentMode === 'alpha') { displayItems.sort((a, b) => a.name.localeCompare(b.name, 'ru')); } // Сортировка с поддержкой русского языка
+                else if (currentMode === 'newest') { displayItems.sort((a, b) => b.id - a.id); }
+
+                // Отрисовываем отсортированные продукты в красивый гибкий флекс-ряд
                 const listDiv = document.createElement('div');
                 listDiv.className = 'list-grid';
                 displayItems.forEach(item => { listDiv.appendChild(createProductCard(item)); });
