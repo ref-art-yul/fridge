@@ -40,7 +40,8 @@
         .list-grid { display: flex; flex-wrap: wrap; gap: 1rem; padding: 0.5rem; justify-content: flex-start; }
         .product-card { position: relative; display: flex; flex-direction: column; align-items: center; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 0.75rem; padding: 0.5rem; cursor: pointer; shadow: 0 1px 2px 0 rgba(0,0,0,0.05); width: 4rem; transition: all 0.2s; box-sizing: border-box; }
         .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
-        .product-spoiled { background-color: #fef2f2 !important; border-color: #f87171 !important; box-shadow: inset 0 0 0 1px #f87171; }
+        .product-spoiled { background-color: #fef2f2 !important; border-color: #fee2e2 !important; }
+        .spoiled-sticker { background-color: #ef4444; color: #ffffff; font-size: 0.6rem; font-weight: 800; padding: 0.2rem 0.4rem; border-radius: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; flex-shrink: 0; box-shadow: 0 1px 3px rgba(239, 68, 68, 0.2); }
         .text-spoiled { color: #dc2626 !important; font-weight: 800 !important; font-size: 0.7rem !important; text-transform: uppercase; letter-spacing: 0.05em; }
         .product-expiring { background-color: #fff1f2; border-color: #fca5a5; }
         .product-warning { background-color: #fff7ed; border-color: #fed7aa; }
@@ -676,7 +677,7 @@
             const card = document.createElement('div');
             
             // Динамически определяем степень критичности срока годности на основе настроек
-            const isSpoiled = item.daysLeft <= 0; // Испорчен, если 0 или меньше дней
+            const isSpoiled = item.daysLeft <= 0; 
             const isRed = !isSpoiled && item.daysLeft <= expiryRedDays;
             const isOrange = !isSpoiled && !isRed && item.daysLeft <= expiryOrangeDays;
             
@@ -692,21 +693,28 @@
             card.setAttribute('data-id', item.id);
             card.onclick = () => openProductDetailsModal(item.id);
             
-            // Настраиваем правый текстовый блок (дни или статус)
+            // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
             if (isSpoiled) {
-                daysHTML = `<span class="text-spoiled">Испорчен 🦠</span>`;
+                // Если продукт испорчен, выводим аккуратный лейбл на месте срока годности
+                daysHTML = '<div class="spoiled-sticker">ИСПОРЧЕН</div>';
             } else {
                 let daysClass = 'product-days';
                 if (isRed) daysClass += ' text-rose';
                 if (isOrange) daysClass += ' text-orange';
-                daysHTML = `<span class="${daysClass}">${item.daysLeft} дн.</span>`;
+                daysHTML = '<span class="' + daysClass + '">' + item.daysLeft + ' дн.</span>';
+            }
+
+            // Рендерим бейдж количества
+            let badgeHTML = '';
+            if (item.qty > 1) {
+                badgeHTML = '<span class="product-badge">' + item.qty + '</span>';
             }
 
             card.innerHTML = `
                 <span class="product-emoji">${getEmoji(item.name)}</span>
                 <span class="product-name">${item.name}</span>
-                ${item.qty > 1 ? `<span class="product-badge">${item.qty}</span>` : ''}
+                ${badgeHTML}
                 ${daysHTML}
             `;
             return card;
