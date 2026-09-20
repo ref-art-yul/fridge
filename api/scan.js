@@ -31,7 +31,7 @@ export default async function handler(request, response) {
             "[{\"name\": \"Название продукта на русском языке с заглавной буквы в единственном числе\", \"qty\": 1, \"shelf\": \"Точное название полки из списка выше\"}]. " +
             "Пример ответа: [{\"name\": \"Молоко\", \"qty\": 2, \"shelf\": \"Верхняя полка\"}]. Если продуктов на фото нет, верни пустой массив [].";
 
-        // Запрос к OpenRouter с переключением на более стабильный бесплатный Gemini
+        // Запрос к OpenRouter с переключением на более стабильный бесплатный Llama
         const aiResponse = await fetch('https://openrouter.ai/api/v1/chat/completions', {
             method: 'POST',
             headers: { 
@@ -41,7 +41,7 @@ export default async function handler(request, response) {
                 'X-Title': 'Fridge App'
             },
             body: JSON.stringify({
-                model: "google/gemini-2.5-flash:free", // Переключаемся на безотказный бесплатный Gemini
+                    model: "meta-llama/llama-3.2-11b-vision-instruct:free", // Переключаемся на безотказный бесплатный Llama
                 messages: [
                     {
                         role: "user",
