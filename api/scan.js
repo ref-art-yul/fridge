@@ -121,7 +121,7 @@ export default async function handler(request, response) {
             aiTextResponse = aiTextResponse.replace(/^```json/, '').replace(/```$/, '').trim();
         }
 
-        // Вырезаем только границы чистого JSON-массива объектов
+        // Вырезаем только границы чистого JSON-массива объектов ///////////
         const startIdx = aiTextResponse.indexOf('[');
         const endIdx = aiTextResponse.lastIndexOf(']');
         if (startIdx !== -1 && endIdx !== -1) {
@@ -135,4 +135,4 @@ export default async function handler(request, response) {
         console.error('Ошибка на сервере Vercel:', error);
         return response.status(500).json({ error: 'Ошибка сервера при распознавании Hugging Face', details: error.message });
     }
-}//
+}
