@@ -135,4 +135,4 @@ export default async function handler(request, response) {
         console.error('Ошибка на сервере Vercel:', error);
         return response.status(500).json({ error: 'Ошибка сервера при распознавании Hugging Face', details: error.message });
     }
-}
+}//
