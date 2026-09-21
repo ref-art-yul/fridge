@@ -121,7 +121,7 @@ export default async function handler(request, response) {
             aiTextResponse = aiTextResponse.replace(/^```json/, '').replace(/```$/, '').trim();
         }
 
-        // Вырезаем только границы чистого JSON-массива объектов /////////// vercel ///////
+        // Вырезаем только границы чистого JSON-массива объектов
         const startIdx = aiTextResponse.indexOf('[');
         const endIdx = aiTextResponse.lastIndexOf(']');
         if (startIdx !== -1 && endIdx !== -1) {
