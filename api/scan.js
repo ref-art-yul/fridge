@@ -40,7 +40,7 @@ export default async function handler(request, response) {
             try {
                 console.log("Попытка " + attempt + ": отправляем запрос в Hugging Face...");
                 
-                const hfResponse = await fetch('https://api-inference.huggingface.co/models', {
+                const hfResponse = await fetch('https://router.huggingface.co/v1/chat/completions', {
                     method: 'POST',
                     headers: { 
                         'Content-Type': 'application/json',
