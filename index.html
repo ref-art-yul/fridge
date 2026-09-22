@@ -809,39 +809,21 @@
             card.className = cardClass;
             card.setAttribute('data-id', String(item.id));
             
-            // НАСТРОЙКА DRAG & DROP ДЛЯ ПК (Мышь)
-            card.draggable = true;
-            card.addEventListener('dragstart', (e) => {
-                // Принудительно передаем ID как строку, чтобы ПК-движок не терял ИИ-продукты
-                e.dataTransfer.setData('text/plain', String(item.id));
-                draggedElementId = String(item.id); 
-            });
-            card.addEventListener('dragend', () => {
-                draggedElementId = null;
-            });
+            // НАСТРОЙКА DRAG & DROP
+            // Отключаем старый капризный браузерный драг ПК, так как теперь мышь работает через фантомный движок
+            card.draggable = false;
             
-            // НАСТРОЙКА DRAG & DROP ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (Тач-Фантом)
-            card.addEventListener('touchstart', (e) => {
-                onTouchStart(e, String(item.id));
-            }, { passive: true });
-            
-            card.addEventListener('touchmove', (e) => {
-                if (isMovingProduct && e.cancelable) {
-                    e.preventDefault(); // Блокируем скролл экрана только во время реального переноса
-                }
-                onTouchMove(e);
-            }, { passive: false });
-            
+            // Настройка для мобильных телефонов (Тач)
+            card.addEventListener('touchstart', (e) => onTouchStart(e, item.id), { passive: true });
+            card.addEventListener('touchmove', (e) => onTouchMove(e), { passive: false });
             card.addEventListener('touchend', onTouchEnd);
             
-            // ЖЕЛЕЗОБЕТОННЫЙ КЛИК: Работает идеально и на ПК, и на телефонах без конфликтов жестов
-            card.onclick = (e) => {
-                e.stopPropagation();
-                // Открываем карточку, только если пользователь не перетаскивал плашку
-                if (!isMovingProduct && !draggedElementId) {
-                    openProductDetailsModal(item.id);
-                }
-            };
+            // Настройка для компьютеров (Мышь)
+            card.addEventListener('mousedown', (e) => {
+                if (e.button === 0) onMouseDown(e, item.id); // Активируем только при нажатии левой кнопки мыши
+            });
+            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mouseup', onMouseUp);
             
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
@@ -2504,45 +2486,39 @@
 
         // 2. Обработка для мобильных телефонов (Touch Events)
         let draggedElementId = null; // Глобальная переменная для Drag & Drop на компьютерах
-        // БРОНЕБОЙНЫЙ ТАЧ-ДВИЖЕК С УДЕРЖАНИЕМ (LONG PRESS) И ВИРТУАЛЬНЫМ ФАНТОМОМ
+        
+        // ЕДИНЫЙ УНИВЕРСАЛЬНЫЙ ДВИЖЕК ПЕРЕТАСКИВАНИЯ ДЛЯ ПК И МОБИЛЬНЫХ ТЕЛЕФОНОВ
         let touchActiveProductId = null;
         let touchStartCardElement = null;
         let touchGhostElement = null;
         let touchX = 0;
         let touchY = 0;
         let isMovingProduct = false;
-        let touchTimer = null; // Системный таймер для задержки удержания
+        let touchTimer = null;
 
-        function onTouchStart(event, productId) {
-            // Принудительно очищаем и сбрасываем любые старые зависшие таймеры
+        // Общая функция старта (палец или мышь)
+        function startDragLogic(clientX, clientY, productId, cardElement, isMobile) {
             if (touchTimer) clearTimeout(touchTimer);
 
-            const cleanId = String(productId).trim();
-            const card = event.target.closest('.product-card');
-            if (!card) return;
-
-            touchActiveProductId = cleanId;
-            touchStartCardElement = card;
+            touchActiveProductId = String(productId).trim();
+            touchStartCardElement = cardElement;
             isMovingProduct = false;
+            touchX = clientX;
+            touchY = clientY;
 
-            const touch = event.touches[0];
-            touchX = touch.clientX;
-            touchY = touch.clientY;
+            // На мобилках делаем задержку 300мс для скролла, на ПК мышка включает перенос мгновенно (через 50мс)
+            const delay = isMobile ? 300 : 50;
 
-            // ЗАПУСКАЕМ ТАЙМЕР УДЕРЖАНИЯ (300 мс). Перенос включится, только если палец не двигался и удерживался
             touchTimer = setTimeout(() => {
                 isMovingProduct = true;
-                
-                // Визуальный отклик для пользователя: карточка стала полупрозрачной — можно тащить!
-                touchStartCardElement.style.opacity = '0.3';
+                if (touchStartCardElement) touchStartCardElement.style.opacity = '0.3';
 
-                // Создаем ультра-легкий невесомый виртуальный фантом (без тяжелой верстки оригинала)
                 touchGhostElement = document.createElement('div');
                 touchGhostElement.style.position = 'fixed';
                 touchGhostElement.style.width = '56px';
                 touchGhostElement.style.height = '56px';
                 touchGhostElement.style.zIndex = '9999';
-                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы под фантомом
+                touchGhostElement.style.pointerEvents = 'none';
                 touchGhostElement.style.opacity = '0.9';
                 touchGhostElement.style.backgroundColor = '#ffffff';
                 touchGhostElement.style.border = '2px solid #4f46e5';
@@ -2552,80 +2528,60 @@
                 touchGhostElement.style.alignItems = 'center';
                 touchGhostElement.style.justifyContent = 'center';
                 
-                // Вытаскиваем только эмодзи продукта для красивого лаконичного отображения в полете
                 const currentEmoji = touchStartCardElement.querySelector('.product-emoji')?.textContent || '📦';
                 touchGhostElement.innerHTML = `<span style="font-size: 1.75rem; line-height: 1;">${currentEmoji}</span>`;
                 
-                // Центрируем фантом ровно под подушечкой пальца
                 touchGhostElement.style.left = (touchX - 28) + 'px';
                 touchGhostElement.style.top = (touchY - 28) + 'px';
                 
                 document.body.appendChild(touchGhostElement);
-
-            }, 300); // 300 миллисекунд — идеальный баланс между скоростью и защитой от ложных скроллов
+            }, delay);
         }
 
-        function onTouchMove(event) {
+        // Общая функция движения (палец или мышь)
+        function moveDragLogic(event, clientX, clientY) {
             if (!touchActiveProductId || !touchStartCardElement) return;
 
-            const touch = event.touches[0];
-            const currentX = touch.clientX;
-            const currentY = touch.clientY;
-
-            // Если режим переноса ЕЩЕ НЕ включился (пользователь ведет палец раньше 300 мс)
             if (!isMovingProduct) {
-                const moveDeltaX = Math.abs(currentX - touchX);
-                const moveDeltaY = Math.abs(currentY - touchY);
-                
-                // Если сдвиг больше 8 пикселей — это обычный скролл страницы! Мгновенно отменяем таймер удержания
+                const moveDeltaX = Math.abs(clientX - touchX);
+                const moveDeltaY = Math.abs(clientY - touchY);
                 if (moveDeltaX > 8 || moveDeltaY > 8) {
                     if (touchTimer) clearTimeout(touchTimer);
                     touchActiveProductId = null;
                     touchStartCardElement = null;
                 }
-                return; // Выходим, не блокируя стандартный скролл браузера
+                return;
             }
 
-            // ЕСЛИ РЕЖИМ ПЕРЕНОСА АКТИВИРОВАН (после 300 мс удержания)
             if (isMovingProduct && touchGhostElement) {
-                // Блокируем скролл страницы телефона, чтобы экран стоял намертво во время драга
                 if (event.cancelable) event.preventDefault();
 
-                // Плавно перемещаем фантом за пальцем с аппаратным ускорением
-                touchGhostElement.style.left = (currentX - 32) + 'px';
-                touchGhostElement.style.top = (currentY - 38) + 'px';
+                touchGhostElement.style.left = (clientX - 28) + 'px';
+                touchGhostElement.style.top = (clientY - 28) + 'px';
 
-                // Подсвечиваем полку, над которой пролетает палец
-                const elementUnderFinger = document.elementFromPoint(currentX, currentY);
-                const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
+                const elementUnderCursor = document.elementFromPoint(clientX, clientY);
+                const activeShelf = elementUnderCursor ? elementUnderCursor.closest('.shelf-border') : null;
 
                 document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
                 if (activeShelf) activeShelf.classList.add('shelf-hover');
             }
         }
 
-        function onTouchEnd(event) {
-            // Мгновенно сжигаем таймер удержания, если палец оторвали раньше времени
+        // Общая функция завершения переноса
+        function endDragLogic(clientX, clientY) {
             if (touchTimer) clearTimeout(touchTimer);
-
             document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
 
-            if (touchStartCardElement) {
-                touchStartCardElement.style.opacity = '1';
-            }
-
+            if (touchStartCardElement) touchStartCardElement.style.opacity = '1';
             if (touchGhostElement) {
                 touchGhostElement.remove();
                 touchGhostElement = null;
             }
 
-            // ТАП / КЛИК НА ТЕЛЕФОНЕ: палец отпустили быстро (isMovingProduct остался false) — открываем модалку!
             if (!isMovingProduct && touchActiveProductId) {
                 openProductDetailsModal(touchActiveProductId);
             } else if (isMovingProduct && touchActiveProductId) {
-                // Если перенос был активен, фиксируем финальную полку
-                const touch = event.changedTouches[0];
-                const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                const dropTarget = document.elementFromPoint(clientX, clientY);
                 const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
 
                 if (targetShelfElement) {
@@ -2636,11 +2592,21 @@
                 }
             }
 
-            // Полностью обнуляем состояние для следующего касания
             touchActiveProductId = null;
             touchStartCardElement = null;
             isMovingProduct = false;
         }
+
+        // СВЯЗУЮЩИЕ ОБРАБОТЧИКИ ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (Touch)
+        function onTouchStart(e, id) { startDragLogic(e.touches[0].clientX, e.touches[0].clientY, id, e.target.closest('.product-card'), true); }
+        function onTouchMove(e) { moveDragLogic(e, e.touches[0].clientX, e.touches[0].clientY); }
+        function onTouchEnd(e) { endDragLogic(e.changedTouches[0].clientX, e.changedTouches[0].clientY); }
+
+        // СВЯЗУЮЩИЕ ОБРАБОТЧИКИ ДЛЯ КОМПЬЮТЕРОВ (Мышь)
+        let isMouseDown = false;
+        function onMouseDown(e, id) { isMouseDown = true; startDragLogic(e.clientX, e.clientY, id, e.target.closest('.product-card'), false); }
+        function onMouseMove(e) { if (isMouseDown) moveDragLogic(e, e.clientX, e.clientY); }
+        function onMouseUp(e) { if (isMouseDown) { isMouseDown = false; endDragLogic(e.clientX, e.clientY); } }
 
         // 3. Главная функция перезаписи полки в базе данных
         function executeProductMove(productId, targetShelfName) {
