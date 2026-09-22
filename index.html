@@ -2507,8 +2507,7 @@
                 const elementUnderFinger = document.elementFromPoint(touchMoveX, touchMoveY);
                 const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
 
-            // Сбрасываем подсветку со всех полок и красим только текущую
-            document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
+                document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
                 if (activeShelf) activeShelf.classList.add('shelf-hover');
             }
         }
@@ -2535,12 +2534,10 @@
                     const targetShelfName = targetShelfElement.getAttribute('data-shelf');
                     executeProductMove(draggedElementId, targetShelfName);
                 } else {
-                    // Если отпустили мимо полок, просто перерисовываем на старом месте
                     render();
                 }
             }
 
-            // Очищаем переменные
             touchDraggedCard = null;
             draggedElementId = null;
             isRealDrag = false;
