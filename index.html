@@ -831,11 +831,47 @@
             card.addEventListener('touchend', onTouchEnd);
             
             // Настройка для компьютеров (Мышь)
+            
+            // Системная переменная для разделения клика и драга на ПК (локальный таймер)
+            let clickVsDragTimer = null;
+
+            // Настройка для компьютеров (Мышь)
             card.addEventListener('mousedown', (e) => {
-                if (e.button === 0) onMouseDown(e, item.id); // Активируем только при нажатии левой кнопки мыши
+                // Работаем строго с левой кнопкой мыши на ПК (e.button === 0)
+                if (e.button !== 0 || e.clientX === 0) return;
+
+                if (clickVsDragTimer) clearTimeout(clickVsDragTimer);
+                isMouseDown = true;
+
+                // ЗАПУСКАЕМ МИКРОЗАДЕРЖКУ (150 мс). Драг включится, только если мышку удерживают
+                clickVsDragTimer = setTimeout(() => {
+                    // 150 мс прошло, кнопка все еще зажата — значит, включаем РЕАЛЬНОЕ ПЕРЕТАСКИВАНИЕ
+                    if (isMouseDown) {
+                        startDragLogic(e.clientX, e.clientY, item.id, card, false);
+                    }
+                }, 150); // 150 мс — идеальный микроинтервал, незаметный глазу
             });
+
             window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
+
+            window.addEventListener('mouseup', (e) => {
+                if (isMouseDown) {
+                    isMouseDown = false;
+                    
+                    // Мгновенно сжигаем таймер драга при отпускании кнопки
+                    if (clickVsDragTimer) clearTimeout(clickVsDragTimer);
+
+                    // ЕСЛИ РЕЖИМ ПЕРЕНОСА ЕЩЕ НЕ ВКЛЮЧИЛСЯ (пользователь отпустил мышку быстрее 150 мс) — ЭТО ЧИСТЫЙ КЛИК!
+                    if (!isMovingProduct) {
+                        openProductDetailsModal(item.id); // Безотказно открываем карточку!
+                        touchActiveProductId = null;
+                        touchStartCardElement = null;
+                    } else {
+                        // Если это был долгий осознанный перенос — фиксируем его на полке
+                        endDragLogic(e.clientX, e.clientY);
+                    }
+                }
+            });
             
             // НАДЕЖНЫЙ ОНПЛАТФОРМЕННЫЙ КЛИК: срабатывает всегда, если карточку не перетаскивали
             card.onclick = (e) => {
