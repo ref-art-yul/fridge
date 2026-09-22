@@ -514,6 +514,33 @@
         // Очистка локального кэша для применения новой структуры (Рекомендуется)
         if (localStorage.getItem('user_products_catalog') && !localStorage.getItem('user_products_catalog').includes('{')) { localStorage.removeItem('user_products_catalog'); }
         
+        // АВТОМАТИЧЕСКАЯ САМООЧИСТКА: Защита от поломки базы данных у старых пользователей
+        try {
+            let testCatalog = JSON.parse(localStorage.getItem('user_products_catalog'));
+            if (testCatalog && Array.isArray(testCatalog)) {
+                let isCorrupted = false;
+                
+                // Проверяем каждую карточку товара в памяти устройства
+                testCatalog.forEach(item => {
+                    if (!item || !item.name) {
+                        isCorrupted = true;
+                    } else if (item.emoji && Array.from(item.emoji).length > 2) {
+                        // Если в поле эмодзи просочился длинный текст (больше 2-х символов/суррогатных пар)
+                        isCorrupted = true;
+                    }
+                });
+
+                // Если база данных на устройстве пользователя повреждена — мягко сбрасываем её
+                if (isCorrupted) {
+                    console.warn("Обнаружены поврежденные данные в каталоге! Сбрасываем базу по умолчанию...");
+                    localStorage.removeItem('user_products_catalog');
+                }
+            }
+        } catch (e) {
+            // Если localStorage вообще хранит не JSON и падает при чтении — очищаем его полностью
+            localStorage.removeItem('user_products_catalog');
+        }
+        
         // Переводим каталог на структуру объектов (Имя + Эмодзи)
         let userCatalog = JSON.parse(localStorage.getItem('user_products_catalog')) || [
             { name: 'Молоко', emoji: '🥛', defaultDays: 3 },
@@ -2525,7 +2552,7 @@
             }
         }
 
-        // Самая финальная инициализация всего приложения при старте страницы//
+        // Самая финальная инициализация всего приложения при старте страницы
         render();
 
     </script>
