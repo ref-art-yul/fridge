@@ -2460,7 +2460,8 @@
             const shelfBorder = event.target.closest('.shelf-border');
             if (shelfBorder) shelfBorder.classList.remove('shelf-hover');
 
-            const productId = event.dataTransfer.getData('text/plain') || draggedElementId;
+            // Защита: сначала пробуем взять ID из безопасной переменной, а если пусто — из dataTransfer
+            const productId = draggedElementId || event.dataTransfer.getData('text/plain');
             if (!productId) return;
 
             executeProductMove(productId, targetShelfName);
@@ -2500,21 +2501,32 @@
                 // Визуальный отклик для пользователя: карточка стала полупрозрачной — можно тащить!
                 touchStartCardElement.style.opacity = '0.3';
 
-                // Создаем легкий виртуальный фантом карточки
-                touchGhostElement = touchStartCardElement.cloneNode(true);
+                // Создаем ультра-легкий невесомый виртуальный фантом (без тяжелой верстки оригинала)
+                touchGhostElement = document.createElement('div');
                 touchGhostElement.style.position = 'fixed';
-                touchGhostElement.style.width = '64px';
-                touchGhostElement.style.height = '4.8rem';
+                touchGhostElement.style.width = '56px';
+                touchGhostElement.style.height = '56px';
                 touchGhostElement.style.zIndex = '9999';
-                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы ПОД фантомом
-                touchGhostElement.style.opacity = '0.85';
-                touchGhostElement.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)';
+                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы под фантомом
+                touchGhostElement.style.opacity = '0.9';
+                touchGhostElement.style.backgroundColor = '#ffffff';
+                touchGhostElement.style.border = '2px solid #4f46e5';
+                touchGhostElement.style.borderRadius = '0.5rem';
+                touchGhostElement.style.boxShadow = '0 10px 25px rgba(79, 70, 229, 0.3)';
+                touchGhostElement.style.display = 'flex';
+                touchGhostElement.style.alignItems = 'center';
+                touchGhostElement.style.justifyContent = 'center';
                 
-                // Фиксируем стартовую позицию фантома ровно под пальцем
-                touchGhostElement.style.left = (touchX - 32) + 'px';
-                touchGhostElement.style.top = (touchY - 38) + 'px';
+                // Вытаскиваем только эмодзи продукта для красивого лаконичного отображения в полете
+                const currentEmoji = touchStartCardElement.querySelector('.product-emoji')?.textContent || '📦';
+                touchGhostElement.innerHTML = `<span style="font-size: 1.75rem; line-height: 1;">${currentEmoji}</span>`;
+                
+                // Центрируем фантом ровно под подушечкой пальца
+                touchGhostElement.style.left = (touchX - 28) + 'px';
+                touchGhostElement.style.top = (touchY - 28) + 'px';
                 
                 document.body.appendChild(touchGhostElement);
+
             }, 300); // 300 миллисекунд — идеальный баланс между скоростью и защитой от ложных скроллов
         }
 
