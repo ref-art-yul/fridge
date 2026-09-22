@@ -2441,11 +2441,16 @@
         }
 
         function onDragOver(event) {
-            event.preventDefault(); // Обязательно разрешаем сброс на эту зону
+            // Принудительно отменяем стандартное поведение браузера для ВСЕХ типов данных
+            event.preventDefault();
+            if (event.dataTransfer) {
+                event.dataTransfer.dropEffect = 'move'; // Явно приказываем курсору мыши включить режим переноса
+            }
         }
 
         function onDragEnter(event) {
             event.preventDefault();
+            // Находим ближайшую полку и включаем её красивую подсветку
             const shelfBorder = event.target.closest('.shelf-border');
             if (shelfBorder) shelfBorder.classList.add('shelf-hover');
         }
