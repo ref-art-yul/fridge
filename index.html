@@ -2522,8 +2522,13 @@
         function executeProductMove(productId, targetShelfName) {
             if (!targetShelfName) return;
 
-            const productIndex = products.findIndex(p => String(p.id) === String(productId));
-            if (productIndex === -1) return;
+            // Принудительно приводим оба ID к строке и очищаем от пробелов, чтобы типы данных (число/строка) не конфликтовали
+            const productIndex = products.findIndex(p => String(p.id).trim() === String(productId).trim());
+            
+            if (productIndex === -1) {
+                console.error("Критическая ошибка: не удалось найти продукт с ID:", productId);
+                return;
+            }
 
             // Если продукт действительно перенесли на ДРУГУЮ полку — сохраняем шаг в Историю
             if (products[productIndex].shelf !== targetShelfName) {
