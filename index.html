@@ -2241,32 +2241,33 @@
 
             wrap.appendChild(listContainer);
             container.appendChild(wrap);
+
+            // Добавляем аварийную кнопку сброса данных в самый низ Профиля
+            const resetBtnContainer = document.createElement('div');
+            resetBtnContainer.style.cssText = "margin-top: 2rem; padding: 0 1rem; text-align: center;";
+            resetBtnContainer.innerHTML = `
+                <button onclick="emergencyAppReset()" style="background-color: #ef4444; color: #ffffff; border: none; padding: 0.6rem 1.2rem; font-size: 0.85rem; font-weight: 700; border-radius: 0.5rem; cursor: pointer; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); transition: background 0.2s;" onmouseover="this.style.backgroundColor='#dc2626'" onmouseout="this.style.backgroundColor='#ef4444'">
+                    🚨 Сбросить приложение по умолчанию
+                </button>
+            `;
+            container.appendChild(resetBtnContainer);
         }
 
         // ВАЛИДАЦИЯ И ОБНОВЛЕНИЕ ЭМОДЗИ В РЕАЛЬНОМ ВРЕМЕНИ
         function validateAndChangeEmoji(index, inputElement) {
-            let val = inputElement.value.trim();
-            if (!val) return;
+            let rawValue = inputElement.value.trim();
+            if (!rawValue) return;
 
-            // Современное регулярное выражение для поиска любых эмодзи (включая составные)
-            const emojiRegex = /[\u{1F300}-\u{1F9FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F1E6}-\u{1F1FF}\u{1F191}-\u{1F251}\u{1F004}\u{1F0CF}\u{1F170}-\u{1F190}\u{1F300}-\u{1F773}\u{1F780}-\u{1F7D8}\u{1F7E0}-\u{1F7EB}\u{1F800}-\u{1F80B}\u{1F810}-\u{1F847}\u{1F850}-\u{1F859}\u{1F860}-\u{1F887}\u{1F890}-\u{1F8AD}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA53}\u{1FA60}-\u{1FA6D}\u{1FA70}-\u{1FA74}\u{1FA78}-\u{1FA7A}\u{1FA80}-\u{1FA86}\u{1FA90}-\u{1FAAC}\u{1FAB0}-\u{1FABA}\u{1FAC0}-\u{1FAC5}\u{1FAD0}-\u{1FAD6}\u{200D}\u{FE0F}]/gu;
-            const match = val.match(emojiRegex);
+            // Защита от вставки длинного текста: используем итератор, чтобы корректно отрезать ровно ОДИН эмодзи/символ
+            const chars = Array.from(rawValue);
+            const singleChar = chars[0]; 
 
-            if (match && match.length > 0) {
-                // Берем строго первый найденный эмодзи из строки, отсекая всё лишнее
-                const cleanEmoji = match[0];
-                inputElement.value = cleanEmoji;
-                
-                // Сохраняем новый эмодзи в базу данных каталога
-                userCatalog[index].emoji = cleanEmoji;
-                localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
-                
-                // Мгновенно обновляем интерфейс (полки и рецепты сразу подхватят новый значок!)
-                render();
-            } else {
-                // Если пользователь ввёл буквы, цифры или символы — стираем ввод и возвращаем прошлый эмодзи
-                inputElement.value = userCatalog[index].emoji;
-            }
+            // Обновляем данные в нашей глобальной базе Профиля
+            userCatalog[index].emoji = singleChar;
+            localStorage.setItem('user_products_catalog', JSON.stringify(userCatalog));
+            
+            // Насильно возвращаем в инпут только один чистый символ, стирая остальной спам
+            inputElement.value = singleChar;
         }
 
         function globalChangeCatalogDays(index, value) {
@@ -2513,6 +2514,14 @@
                 const camInp = document.getElementById('cameraInput');
                 if (camInp) camInp.value = '';
                 render();
+            }
+        }
+
+        // Функция полной экстренной очистки данных приложения
+        function emergencyAppReset() {
+            if (confirm("Вы уверены, что хотите полностью сбросить приложение? Все добавленные продукты, кастомные сроки годности и история будут безвозвратно удалены, а база вернется к начальному состоянию.")) {
+                localStorage.clear(); // Стираем всю локальную память браузера
+                window.location.reload(); // Перезагружаем страницу с чистыми заводскими настройками
             }
         }
 
