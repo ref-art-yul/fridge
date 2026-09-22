@@ -807,24 +807,41 @@
             else if (isOrange) cardClass += ' product-warning';
             
             card.className = cardClass;
+            card.setAttribute('data-id', String(item.id));
             
-            // Включаем поддержку перетаскивания для ПК (HTML5 Drag and Drop)
+            // НАСТРОЙКА DRAG & DROP ДЛЯ ПК (HTML5)
             card.draggable = true;
-            card.setAttribute('ondragstart', "onDragStart(event, '" + item.id + "')");
-            card.setAttribute('ondragend', "onDragEnd(event)");
+            card.addEventListener('dragstart', (e) => {
+                onDragStart(e, String(item.id));
+            });
+            card.addEventListener('dragend', onDragEnd);
             
-            // Включаем поддержку перетаскивания для мобильных телефонов (Touch Events)
-            card.setAttribute('ontouchstart', "onTouchStart(event, '" + item.id + "')");
-            card.setAttribute('ontouchmove', "onTouchMove(event)");
-            card.setAttribute('ontouchend', "onTouchEnd(event)");
+            // НАСТРОЙКА DRAG & DROP ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (С защитой от скролла и залипаний)
+            card.addEventListener('touchstart', (e) => {
+                onTouchStart(e, String(item.id));
+            }, { passive: true });
             
-            card.setAttribute('data-id', item.id);
-            card.onclick = () => openProductDetailsModal(item.id);
+            card.addEventListener('touchmove', (e) => {
+                // Если мы действительно тащим карточку — блокируем системный скролл экрана телефона
+                if (touchDraggedCard) {
+                    if (e.cancelable) event.preventDefault();
+                }
+                onTouchMove(e);
+            }, { passive: false });
+            
+            card.addEventListener('touchend', onTouchEnd);
+            
+            // Обычный клик для открытия модального окна деталей
+            card.addEventListener('click', (e) => {
+                // Предотвращаем клик, если это было перетаскивание
+                if (!draggedElementId) {
+                    openProductDetailsModal(item.id);
+                }
+            });
             
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
             if (isSpoiled) {
-                // Если продукт испорчен, выводим аккуратный лейбл на месте срока годности
                 daysHTML = '<div class="spoiled-sticker">ИСПОРЧЕНО</div>';
             } else {
                 let daysClass = 'product-days';
