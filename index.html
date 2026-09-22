@@ -2597,10 +2597,24 @@
             isMovingProduct = false;
         }
 
-        // СВЯЗУЮЩИЕ ОБРАБОТЧИКИ ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (Touch)
-        function onTouchStart(e, id) { startDragLogic(e.touches[0].clientX, e.touches[0].clientY, id, e.target.closest('.product-card'), true); }
-        function onTouchMove(e) { moveDragLogic(e, e.touches[0].clientX, e.touches[0].clientY); }
-        function onTouchEnd(e) { endDragLogic(e.changedTouches[0].clientX, e.changedTouches[0].clientY); }
+        // СВЯЗУЮЩИЕ ОБРАБОТЧИКИ ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (Touch с фиксацией первого пальца)
+        function onTouchStart(e, id) { 
+            if (e.touches && e.touches[0]) {
+                startDragLogic(e.touches[0].clientX, e.touches[0].clientY, id, e.target.closest('.product-card'), true); 
+            }
+        }
+        function onTouchMove(e) { 
+            if (e.touches && e.touches[0]) {
+                moveDragLogic(e, e.touches[0].clientX, e.touches[0].clientY); 
+            }
+        }
+        function onTouchEnd(e) { 
+            if (e.changedTouches && e.changedTouches[0]) {
+                endDragLogic(e.changedTouches[0].clientX, e.changedTouches[0].clientY); 
+            } else {
+                endDragLogic(touchX, touchY);
+            }
+        }
 
         // СВЯЗУЮЩИЕ ОБРАБОТЧИКИ ДЛЯ КОМПЬЮТЕРОВ (Мышь)
         let isMouseDown = false;
