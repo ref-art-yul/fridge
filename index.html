@@ -808,8 +808,16 @@
             
             card.className = cardClass;
             
+            // Включаем поддержку перетаскивания для ПК (HTML5 Drag and Drop)
             card.draggable = true;
-            card.ondragstart = (e) => { e.dataTransfer.setData('text/plain', item.id); };
+            card.setAttribute('ondragstart', "onDragStart(event, '" + item.id + "')");
+            card.setAttribute('ondragend', "onDragEnd(event)");
+            
+            // Включаем поддержку перетаскивания для мобильных телефонов (Touch Events)
+            card.setAttribute('ontouchstart', "onTouchStart(event, '" + item.id + "')");
+            card.setAttribute('ontouchmove', "onTouchMove(event)");
+            card.setAttribute('ontouchend', "onTouchEnd(event)");
+            
             card.setAttribute('data-id', item.id);
             card.onclick = () => openProductDetailsModal(item.id);
             
@@ -1250,7 +1258,7 @@
                 existing.qty += qty; 
             } else { 
                 products.push({ 
-                    id: Date.now(), 
+                    id: "ai_" + now + "_" + Math.floor(Math.random() * 100000),
                     name, 
                     qty, 
                     shelf, 
