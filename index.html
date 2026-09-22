@@ -809,31 +809,38 @@
             card.className = cardClass;
             card.setAttribute('data-id', String(item.id));
             
-            // НАСТРОЙКА DRAG & DROP ДЛЯ ПК (HTML5)
+            // НАСТРОЙКА DRAG & DROP ДЛЯ ПК (Мышь)
             card.draggable = true;
             card.addEventListener('dragstart', (e) => {
-                onDragStart(e, String(item.id));
+                // Принудительно передаем ID как строку, чтобы ПК-движок не терял ИИ-продукты
+                e.dataTransfer.setData('text/plain', String(item.id));
+                draggedElementId = String(item.id); 
             });
-            card.addEventListener('dragend', onDragEnd);
+            card.addEventListener('dragend', () => {
+                draggedElementId = null;
+            });
             
-            // НАСТРОЙКА DRAG & DROP ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (С защитой от скролла и залипаний)
+            // НАСТРОЙКА DRAG & DROP ДЛЯ МОБИЛЬНЫХ ТЕЛЕФОНОВ (Тач-Фантом)
             card.addEventListener('touchstart', (e) => {
                 onTouchStart(e, String(item.id));
             }, { passive: true });
             
             card.addEventListener('touchmove', (e) => {
-                // Если мы действительно тащим карточку — блокируем системный скролл экрана телефона
-                if (touchDraggedCard) {
-                    if (e.cancelable) event.preventDefault();
+                if (isMovingProduct && e.cancelable) {
+                    e.preventDefault(); // Блокируем скролл экрана только во время реального переноса
                 }
                 onTouchMove(e);
             }, { passive: false });
             
             card.addEventListener('touchend', onTouchEnd);
             
-            // Обычный клик для открытия модального окна деталей
-            card.onclick = () => {
-                if (!isRealDrag) openProductDetailsModal(item.id);
+            // ЖЕЛЕЗОБЕТОННЫЙ КЛИК: Работает идеально и на ПК, и на телефонах без конфликтов жестов
+            card.onclick = (e) => {
+                e.stopPropagation();
+                // Открываем карточку, только если пользователь не перетаскивал плашку
+                if (!isMovingProduct && !draggedElementId) {
+                    openProductDetailsModal(item.id);
+                }
             };
             
             // Настраиваем правый текстовый блок (дни или наклейка)
@@ -2460,6 +2467,7 @@
         }
 
         // 2. Обработка для мобильных телефонов (Touch Events)
+        let draggedElementId = null; // Глобальная переменная для Drag & Drop на компьютерах
         // БРОНЕБОЙНЫЙ ТАЧ-ДВИЖЕК С ВИРТУАЛЬНЫМ ФАНТОМОМ (Без лагов, троения и CORS ошибок)
         let touchActiveProductId = null;
         let touchStartCardElement = null;
