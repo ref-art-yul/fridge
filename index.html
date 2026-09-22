@@ -2468,16 +2468,19 @@
 
         // 2. Обработка для мобильных телефонов (Touch Events)
         let draggedElementId = null; // Глобальная переменная для Drag & Drop на компьютерах
-        // БРОНЕБОЙНЫЙ ТАЧ-ДВИЖЕК С ВИРТУАЛЬНЫМ ФАНТОМОМ (Без лагов, троения и CORS ошибок)
+        // БРОНЕБОЙНЫЙ ТАЧ-ДВИЖЕК С УДЕРЖАНИЕМ (LONG PRESS) И ВИРТУАЛЬНЫМ ФАНТОМОМ
         let touchActiveProductId = null;
         let touchStartCardElement = null;
         let touchGhostElement = null;
         let touchX = 0;
         let touchY = 0;
         let isMovingProduct = false;
+        let touchTimer = null; // Системный таймер для задержки удержания
 
         function onTouchStart(event, productId) {
-            // Принудительно приводим ID к чистой строке, убирая любые конфликты типов данных
+            // Принудительно очищаем и сбрасываем любые старые зависшие таймеры
+            if (touchTimer) clearTimeout(touchTimer);
+
             const cleanId = String(productId).trim();
             const card = event.target.closest('.product-card');
             if (!card) return;
@@ -2489,6 +2492,30 @@
             const touch = event.touches[0];
             touchX = touch.clientX;
             touchY = touch.clientY;
+
+            // ЗАПУСКАЕМ ТАЙМЕР УДЕРЖАНИЯ (300 мс). Перенос включится, только если палец не двигался и удерживался
+            touchTimer = setTimeout(() => {
+                isMovingProduct = true;
+                
+                // Визуальный отклик для пользователя: карточка стала полупрозрачной — можно тащить!
+                touchStartCardElement.style.opacity = '0.3';
+
+                // Создаем легкий виртуальный фантом карточки
+                touchGhostElement = touchStartCardElement.cloneNode(true);
+                touchGhostElement.style.position = 'fixed';
+                touchGhostElement.style.width = '64px';
+                touchGhostElement.style.height = '4.8rem';
+                touchGhostElement.style.zIndex = '9999';
+                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы ПОД фантомом
+                touchGhostElement.style.opacity = '0.85';
+                touchGhostElement.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)';
+                
+                // Фиксируем стартовую позицию фантома ровно под пальцем
+                touchGhostElement.style.left = (touchX - 32) + 'px';
+                touchGhostElement.style.top = (touchY - 38) + 'px';
+                
+                document.body.appendChild(touchGhostElement);
+            }, 300); // 300 миллисекунд — идеальный баланс между скоростью и защитой от ложных скроллов
         }
 
         function onTouchMove(event) {
@@ -2498,37 +2525,30 @@
             const currentX = touch.clientX;
             const currentY = touch.clientY;
 
-            const deltaX = currentX - touchX;
-            const deltaY = currentY - touchY;
-
-            // Если сдвиг пальца больше 6 пикселей — пользователь осознанно тащит карточку
-            if (!isMovingProduct && (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6)) {
-                isMovingProduct = true;
-
-                // 1. Делаем оригинальную карточку полупрозрачной на полке
-                touchStartCardElement.style.opacity = '0.3';
-
-                // 2. Создаем легкий виртуальный фантом карточки, который полетит за пальцем
-                touchGhostElement = touchStartCardElement.cloneNode(true);
-                touchGhostElement.style.position = 'fixed';
-                touchGhostElement.style.width = '64px';
-                touchGhostElement.style.height = '4.8rem';
-                touchGhostElement.style.zIndex = '9999';
-                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы ПОД фантомом
-                touchGhostElement.style.opacity = '0.85';
-                touchGhostElement.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)';
-                document.body.appendChild(touchGhostElement);
+            // Если режим переноса ЕЩЕ НЕ включился (пользователь ведет палец раньше 300 мс)
+            if (!isMovingProduct) {
+                const moveDeltaX = Math.abs(currentX - touchX);
+                const moveDeltaY = Math.abs(currentY - touchY);
+                
+                // Если сдвиг больше 8 пикселей — это обычный скролл страницы! Мгновенно отменяем таймер удержания
+                if (moveDeltaX > 8 || moveDeltaY > 8) {
+                    if (touchTimer) clearTimeout(touchTimer);
+                    touchActiveProductId = null;
+                    touchStartCardElement = null;
+                }
+                return; // Выходим, не блокируя стандартный скролл браузера
             }
 
+            // ЕСЛИ РЕЖИМ ПЕРЕНОСА АКТИВИРОВАН (после 300 мс удержания)
             if (isMovingProduct && touchGhostElement) {
-                // Блокируем системный скролл экрана смартфона, чтобы страница не дергалась
+                // Блокируем скролл страницы телефона, чтобы экран стоял намертво во время драга
                 if (event.cancelable) event.preventDefault();
 
-                // Двигаем фантом с аппаратным ускорением видеокарты телефона (минус половина размеров плашки)
+                // Плавно перемещаем фантом за пальцем с аппаратным ускорением
                 touchGhostElement.style.left = (currentX - 32) + 'px';
                 touchGhostElement.style.top = (currentY - 38) + 'px';
 
-                // Определяем полку, над которой сейчас летит палец, и подсвечиваем ее
+                // Подсвечиваем полку, над которой пролетает палец
                 const elementUnderFinger = document.elementFromPoint(currentX, currentY);
                 const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
 
@@ -2538,39 +2558,38 @@
         }
 
         function onTouchEnd(event) {
-            // Убираем подсветку со всех полок холодильника
+            // Мгновенно сжигаем таймер удержания, если палец оторвали раньше времени
+            if (touchTimer) clearTimeout(touchTimer);
+
             document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
 
-            // Восстанавливаем видимость оригинальной карточки
             if (touchStartCardElement) {
                 touchStartCardElement.style.opacity = '1';
             }
 
-            // Уничтожаем виртуальный фантом из памяти и с экрана
             if (touchGhostElement) {
                 touchGhostElement.remove();
                 touchGhostElement = null;
             }
 
-            // ТАП / КЛИК НА ТЕЛЕФОНЕ: Если палец никуда не двигался — мгновенно открываем детали!
+            // ТАП / КЛИК НА ТЕЛЕФОНЕ: палец отпустили быстро (isMovingProduct остался false) — открываем модалку!
             if (!isMovingProduct && touchActiveProductId) {
                 openProductDetailsModal(touchActiveProductId);
             } else if (isMovingProduct && touchActiveProductId) {
-                // Если это был реальный перенос, берем финальные координаты пальца
+                // Если перенос был активен, фиксируем финальную полку
                 const touch = event.changedTouches[0];
                 const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                 const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
 
                 if (targetShelfElement) {
                     const targetShelfName = targetShelfElement.getAttribute('data-shelf');
-                    // Переносим продукт (включая ИИ-товары со строковыми ID)
                     executeProductMove(touchActiveProductId, targetShelfName);
                 } else {
-                    render(); // Сбросили мимо полок — возвращаем на место
+                    render();
                 }
             }
 
-            // Сбрасываем переменные для следующего жеста
+            // Полностью обнуляем состояние для следующего касания
             touchActiveProductId = null;
             touchStartCardElement = null;
             isMovingProduct = false;
