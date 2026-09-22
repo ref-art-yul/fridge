@@ -832,12 +832,9 @@
             card.addEventListener('touchend', onTouchEnd);
             
             // Обычный клик для открытия модального окна деталей
-            card.addEventListener('click', (e) => {
-                // Предотвращаем клик, если это было перетаскивание
-                if (!draggedElementId) {
-                    openProductDetailsModal(item.id);
-                }
-            });
+            card.onclick = () => {
+                if (!isRealDrag) openProductDetailsModal(item.id);
+            };
             
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
@@ -2467,7 +2464,10 @@
         let touchDraggedCard = null;
         let touchStartX = 0;
         let touchStartY = 0;
-        let originalShelfName = '';
+        let touchMoveX = 0;
+        let touchMoveY = 0;
+        let isRealDrag = false; // Флаг: перенос это или просто быстрый тап
+        let draggedElementId = null;
 
         function onTouchStart(event, productId) {
             const card = event.target.closest('.product-card');
@@ -2475,72 +2475,75 @@
 
             touchDraggedCard = card;
             draggedElementId = productId;
-            
+            isRealDrag = false;
+
             const touch = event.touches[0];
             touchStartX = touch.clientX;
             touchStartY = touch.clientY;
-
-            // Запоминаем текущую полку продукта
-            const product = products.find(p => String(p.id) === String(productId));
-            if (product) originalShelfName = product.shelf;
         }
 
         function onTouchMove(event) {
             if (!touchDraggedCard) return;
 
             const touch = event.touches[0];
-            const currentX = touch.clientX;
-            const currentY = touch.clientY;
+            touchMoveX = touch.clientX;
+            touchMoveY = touch.clientY;
 
-            // Визуально двигаем карточку за пальцем
-            touchDraggedCard.style.position = 'fixed';
-            touchDraggedCard.style.left = (currentX - 32) + 'px'; // 32 - половина ширины карточки (64px)
-            touchDraggedCard.style.top = (currentY - 38) + 'px';  // 38 - половина высоты карточки
-            touchDraggedCard.style.zIndex = '1000';
-            touchDraggedCard.style.pointerEvents = 'none'; // Позволяет определять элементы ПОД карточкой
+            const deltaX = touchMoveX - touchStartX;
+            const deltaY = touchMoveY - touchStartY;
 
-            // Подсвечиваем полку, над которой сейчас находится палец
-            const elementUnderFinger = document.elementFromPoint(currentX, currentY);
-            const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
+            // Если сдвиг больше 5 пикселей — включаем режим реального перетаскивания
+            if (!isRealDrag && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
+                isRealDrag = true;
+                touchDraggedCard.style.zIndex = '1000';
+                touchDraggedCard.style.pointerEvents = 'none'; // Чтобы видеть элементы под пальцем
+            }
+
+            if (isRealDrag) {
+                // Включаем аппаратное ускорение видеокарты смартфона (translate3d) — карточка летает за пальцем!
+                touchDraggedCard.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+
+                // Подсвечиваем полку под пальцем
+                const elementUnderFinger = document.elementFromPoint(touchMoveX, touchMoveY);
+                const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
 
             // Сбрасываем подсветку со всех полок и красим только текущую
             document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
-            if (activeShelf) activeShelf.classList.add('shelf-hover');
+                if (activeShelf) activeShelf.classList.add('shelf-hover');
+            }
         }
 
         function onTouchEnd(event) {
-            if (!touchDraggedCard || !draggedElementId) return;
+            if (!touchDraggedCard) return;
 
-            // Убираем подсветку полок
             document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
 
-            // Находим финальные координаты пальца
-            const touch = event.changedTouches[0];
-            const finalX = touch.clientX;
-            const finalY = touch.clientY;
-
-            // Определяем, над каким элементом отпустили палец
-            const dropTarget = document.elementFromPoint(finalX, finalY);
-            const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
-
-            // Сбрасываем временные стили перетаскивания с карточки
-            touchDraggedCard.style.position = '';
-            touchDraggedCard.style.left = '';
-            touchDraggedCard.style.top = '';
+            // Сбрасываем аппаратные стили
             touchDraggedCard.style.zIndex = '';
             touchDraggedCard.style.pointerEvents = '';
+            touchDraggedCard.style.transform = '';
 
-            if (targetShelfElement) {
-                const targetShelfName = targetShelfElement.getAttribute('data-shelf');
-                executeProductMove(draggedElementId, targetShelfName);
-            } else {
-                // Если отпустили мимо полок, просто перерисовываем на старом месте
-                render();
+            // КЛИК ДЛЯ ТЕЛЕФОНА: Если палец почти не сдвинулся — открываем модалку!
+            if (!isRealDrag && draggedElementId) {
+                openProductDetailsModal(draggedElementId);
+            } else if (isRealDrag && draggedElementId) {
+                // Если это был осознанный перенос, определяем финальную полку
+                const dropTarget = document.elementFromPoint(touchMoveX, touchMoveY);
+                const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
+
+                if (targetShelfElement) {
+                    const targetShelfName = targetShelfElement.getAttribute('data-shelf');
+                    executeProductMove(draggedElementId, targetShelfName);
+                } else {
+                    // Если отпустили мимо полок, просто перерисовываем на старом месте
+                    render();
+                }
             }
 
             // Очищаем переменные
             touchDraggedCard = null;
             draggedElementId = null;
+            isRealDrag = false;
         }
 
         // 3. Главная функция перезаписи полки в базе данных
