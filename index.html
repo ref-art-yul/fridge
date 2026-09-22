@@ -2396,6 +2396,147 @@
         // Запускаем автоматическую смену каждые 2.5 секунды (2500 мс)
         setInterval(animatePlaceholdersLoop, 2500);
 
+        // МОДУЛЬ DRAG & DROP: Перетаскивание продуктов на ПК и мобильных телефонах
+        let draggedElementId = null;
+
+        // 1. Обработка для ПК (HTML5 Drag and Drop)
+        function onDragStart(event, productId) {
+            draggedElementId = productId;
+            event.dataTransfer.setData('text/plain', productId);
+            // Добавляем легкую прозрачность карточке при старте переноса
+            setTimeout(() => event.target.style.opacity = '0.4', 0);
+        }
+
+        function onDragEnd(event) {
+            event.target.style.opacity = '1';
+            draggedElementId = null;
+        }
+
+        function onDragOver(event) {
+            event.preventDefault(); // Обязательно разрешаем сброс на эту зону
+        }
+
+        function onDragEnter(event) {
+            event.preventDefault();
+            const shelfBorder = event.target.closest('.shelf-border');
+            if (shelfBorder) shelfBorder.classList.add('shelf-hover');
+        }
+
+        function onDragLeave(event) {
+            const shelfBorder = event.target.closest('.shelf-border');
+            if (shelfBorder) shelfBorder.classList.remove('shelf-hover');
+        }
+
+        function onDrop(event, targetShelfName) {
+            event.preventDefault();
+            const shelfBorder = event.target.closest('.shelf-border');
+            if (shelfBorder) shelfBorder.classList.remove('shelf-hover');
+
+            const productId = event.dataTransfer.getData('text/plain') || draggedElementId;
+            if (!productId) return;
+
+            executeProductMove(productId, targetShelfName);
+        }
+
+        // 2. Обработка для мобильных телефонов (Touch Events)
+        let touchDraggedCard = null;
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let originalShelfName = '';
+
+        function onTouchStart(event, productId) {
+            const card = event.target.closest('.product-card');
+            if (!card) return;
+
+            touchDraggedCard = card;
+            draggedElementId = productId;
+            
+            const touch = event.touches[0];
+            touchStartX = touch.clientX;
+            touchStartY = touch.clientY;
+
+            // Запоминаем текущую полку продукта
+            const product = products.find(p => String(p.id) === String(productId));
+            if (product) originalShelfName = product.shelf;
+        }
+
+        function onTouchMove(event) {
+            if (!touchDraggedCard) return;
+
+            const touch = event.touches[0];
+            const currentX = touch.clientX;
+            const currentY = touch.clientY;
+
+            // Визуально двигаем карточку за пальцем
+            touchDraggedCard.style.position = 'fixed';
+            touchDraggedCard.style.left = (currentX - 32) + 'px'; // 32 - половина ширины карточки (64px)
+            touchDraggedCard.style.top = (currentY - 38) + 'px';  // 38 - половина высоты карточки
+            touchDraggedCard.style.zIndex = '1000';
+            touchDraggedCard.style.pointerEvents = 'none'; // Позволяет определять элементы ПОД карточкой
+
+            // Подсвечиваем полку, над которой сейчас находится палец
+            const elementUnderFinger = document.elementFromPoint(currentX, currentY);
+            const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
+
+            // Сбрасываем подсветку со всех полок и красим только текущую
+            document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
+            if (activeShelf) activeShelf.classList.add('shelf-hover');
+        }
+
+        function onTouchEnd(event) {
+            if (!touchDraggedCard || !draggedElementId) return;
+
+            // Убираем подсветку полок
+            document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
+
+            // Находим финальные координаты пальца
+            const touch = event.changedTouches[0];
+            const finalX = touch.clientX;
+            const finalY = touch.clientY;
+
+            // Определяем, над каким элементом отпустили палец
+            const dropTarget = document.elementFromPoint(finalX, finalY);
+            const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
+
+            // Сбрасываем временные стили перетаскивания с карточки
+            touchDraggedCard.style.position = '';
+            touchDraggedCard.style.left = '';
+            touchDraggedCard.style.top = '';
+            touchDraggedCard.style.zIndex = '';
+            touchDraggedCard.style.pointerEvents = '';
+
+            if (targetShelfElement) {
+                const targetShelfName = targetShelfElement.getAttribute('data-shelf');
+                executeProductMove(draggedElementId, targetShelfName);
+            } else {
+                // Если отпустили мимо полок, просто перерисовываем на старом месте
+                render();
+            }
+
+            // Очищаем переменные
+            touchDraggedCard = null;
+            draggedElementId = null;
+        }
+
+        // 3. Главная функция перезаписи полки в базе данных
+        function executeProductMove(productId, targetShelfName) {
+            if (!targetShelfName) return;
+
+            const productIndex = products.findIndex(p => String(p.id) === String(productId));
+            if (productIndex === -1) return;
+
+            // Если продукт действительно перенесли на ДРУГУЮ полку — сохраняем шаг в Историю
+            if (products[productIndex].shelf !== targetShelfName) {
+                saveState(); // Запоминаем для кнопки Назад (Undo)
+                
+                products[productIndex].shelf = targetShelfName;
+                localStorage.setItem('my_fridge_items', JSON.stringify(products));
+                console.log("Продукт успешно перенесен на полку: " + targetShelfName);
+            }
+            
+            render();
+        }
+        
         // ЭТАП 2: Сжатие фотографии и перевод в текстовый формат Base64
         function handleCameraFile(inputElement) {
             if (!inputElement.files || inputElement.files.length === 0) return;
