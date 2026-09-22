@@ -825,6 +825,14 @@
             window.addEventListener('mousemove', onMouseMove);
             window.addEventListener('mouseup', onMouseUp);
             
+            // НАДЕЖНЫЙ ОНПЛАТФОРМЕННЫЙ КЛИК: срабатывает всегда, если карточку не перетаскивали
+            card.onclick = (e) => {
+                e.stopPropagation();
+                if (!isMovingProduct) {
+                    openProductDetailsModal(item.id);
+                }
+            };
+            
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
             if (isSpoiled) {
@@ -2578,9 +2586,7 @@
                 touchGhostElement = null;
             }
 
-            if (!isMovingProduct && touchActiveProductId) {
-                openProductDetailsModal(touchActiveProductId);
-            } else if (isMovingProduct && touchActiveProductId) {
+            if (isMovingProduct && touchActiveProductId) {
                 const dropTarget = document.elementFromPoint(clientX, clientY);
                 const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
 
@@ -2802,7 +2808,7 @@
             }
         }
 
-        // Самая финальная инициализация всего приложения при старте страницы//
+        // Самая финальная инициализация всего приложения при старте страницы
         render();
 
     </script>
