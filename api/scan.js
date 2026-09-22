@@ -44,7 +44,7 @@ export default async function handler(request, response) {
                 'Authorization': 'Bearer ' + HF_TOKEN
             },
             body: JSON.stringify({
-                model: "Qwen/Qwen3-VL-4B-Instruct:fastest", // Используем скоростную Vision-модель из примера
+                model: "Qwen/Qwen3-VL-4B-Instruct:featherless-ai", // Используем скоростную Vision-модель из примера
                 messages: [
                     {
                         role: "user",
