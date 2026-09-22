@@ -2460,50 +2460,68 @@
         }
 
         // 2. Обработка для мобильных телефонов (Touch Events)
-        let touchDraggedCard = null;
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let touchMoveX = 0;
-        let touchMoveY = 0;
-        let isRealDrag = false; // Флаг: перенос это или просто быстрый тап
-        let draggedElementId = null;
+        // БРОНЕБОЙНЫЙ ТАЧ-ДВИЖЕК С ВИРТУАЛЬНЫМ ФАНТОМОМ (Без лагов, троения и CORS ошибок)
+        let touchActiveProductId = null;
+        let touchStartCardElement = null;
+        let touchGhostElement = null;
+        let touchX = 0;
+        let touchY = 0;
+        let isMovingProduct = false;
 
         function onTouchStart(event, productId) {
+            // Принудительно приводим ID к чистой строке, убирая любые конфликты типов данных
+            const cleanId = String(productId).trim();
             const card = event.target.closest('.product-card');
             if (!card) return;
 
-            touchDraggedCard = card;
-            draggedElementId = productId;
-            isRealDrag = false;
+            touchActiveProductId = cleanId;
+            touchStartCardElement = card;
+            isMovingProduct = false;
 
             const touch = event.touches[0];
-            touchStartX = touch.clientX;
-            touchStartY = touch.clientY;
+            touchX = touch.clientX;
+            touchY = touch.clientY;
         }
 
         function onTouchMove(event) {
-            if (!touchDraggedCard) return;
+            if (!touchActiveProductId || !touchStartCardElement) return;
 
             const touch = event.touches[0];
-            touchMoveX = touch.clientX;
-            touchMoveY = touch.clientY;
+            const currentX = touch.clientX;
+            const currentY = touch.clientY;
 
-            const deltaX = touchMoveX - touchStartX;
-            const deltaY = touchMoveY - touchStartY;
+            const deltaX = currentX - touchX;
+            const deltaY = currentY - touchY;
 
-            // Если сдвиг больше 5 пикселей — включаем режим реального перетаскивания
-            if (!isRealDrag && (Math.abs(deltaX) > 5 || Math.abs(deltaY) > 5)) {
-                isRealDrag = true;
-                touchDraggedCard.style.zIndex = '1000';
-                touchDraggedCard.style.pointerEvents = 'none'; // Чтобы видеть элементы под пальцем
+            // Если сдвиг пальца больше 6 пикселей — пользователь осознанно тащит карточку
+            if (!isMovingProduct && (Math.abs(deltaX) > 6 || Math.abs(deltaY) > 6)) {
+                isMovingProduct = true;
+
+                // 1. Делаем оригинальную карточку полупрозрачной на полке
+                touchStartCardElement.style.opacity = '0.3';
+
+                // 2. Создаем легкий виртуальный фантом карточки, который полетит за пальцем
+                touchGhostElement = touchStartCardElement.cloneNode(true);
+                touchGhostElement.style.position = 'fixed';
+                touchGhostElement.style.width = '64px';
+                touchGhostElement.style.height = '4.8rem';
+                touchGhostElement.style.zIndex = '9999';
+                touchGhostElement.style.pointerEvents = 'none'; // Чтобы палец видел элементы ПОД фантомом
+                touchGhostElement.style.opacity = '0.85';
+                touchGhostElement.style.boxShadow = '0 10px 15px -3px rgba(0,0,0,0.2)';
+                document.body.appendChild(touchGhostElement);
             }
 
-            if (isRealDrag) {
-                // Включаем аппаратное ускорение видеокарты смартфона (translate3d) — карточка летает за пальцем!
-                touchDraggedCard.style.transform = `translate3d(${deltaX}px, ${deltaY}px, 0)`;
+            if (isMovingProduct && touchGhostElement) {
+                // Блокируем системный скролл экрана смартфона, чтобы страница не дергалась
+                if (event.cancelable) event.preventDefault();
 
-                // Подсвечиваем полку под пальцем
-                const elementUnderFinger = document.elementFromPoint(touchMoveX, touchMoveY);
+                // Двигаем фантом с аппаратным ускорением видеокарты телефона (минус половина размеров плашки)
+                touchGhostElement.style.left = (currentX - 32) + 'px';
+                touchGhostElement.style.top = (currentY - 38) + 'px';
+
+                // Определяем полку, над которой сейчас летит палец, и подсвечиваем ее
+                const elementUnderFinger = document.elementFromPoint(currentX, currentY);
                 const activeShelf = elementUnderFinger ? elementUnderFinger.closest('.shelf-border') : null;
 
                 document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
@@ -2512,34 +2530,42 @@
         }
 
         function onTouchEnd(event) {
-            if (!touchDraggedCard) return;
-
+            // Убираем подсветку со всех полок холодильника
             document.querySelectorAll('.shelf-border').forEach(s => s.classList.remove('shelf-hover'));
 
-            // Сбрасываем аппаратные стили
-            touchDraggedCard.style.zIndex = '';
-            touchDraggedCard.style.pointerEvents = '';
-            touchDraggedCard.style.transform = '';
+            // Восстанавливаем видимость оригинальной карточки
+            if (touchStartCardElement) {
+                touchStartCardElement.style.opacity = '1';
+            }
 
-            // КЛИК ДЛЯ ТЕЛЕФОНА: Если палец почти не сдвинулся — открываем модалку!
-            if (!isRealDrag && draggedElementId) {
-                openProductDetailsModal(draggedElementId);
-            } else if (isRealDrag && draggedElementId) {
-                // Если это был осознанный перенос, определяем финальную полку
-                const dropTarget = document.elementFromPoint(touchMoveX, touchMoveY);
+            // Уничтожаем виртуальный фантом из памяти и с экрана
+            if (touchGhostElement) {
+                touchGhostElement.remove();
+                touchGhostElement = null;
+            }
+
+            // ТАП / КЛИК НА ТЕЛЕФОНЕ: Если палец никуда не двигался — мгновенно открываем детали!
+            if (!isMovingProduct && touchActiveProductId) {
+                openProductDetailsModal(touchActiveProductId);
+            } else if (isMovingProduct && touchActiveProductId) {
+                // Если это был реальный перенос, берем финальные координаты пальца
+                const touch = event.changedTouches[0];
+                const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
                 const targetShelfElement = dropTarget ? dropTarget.closest('.shelf-border') : null;
 
                 if (targetShelfElement) {
                     const targetShelfName = targetShelfElement.getAttribute('data-shelf');
-                    executeProductMove(draggedElementId, targetShelfName);
+                    // Переносим продукт (включая ИИ-товары со строковыми ID)
+                    executeProductMove(touchActiveProductId, targetShelfName);
                 } else {
-                    render();
+                    render(); // Сбросили мимо полок — возвращаем на место
                 }
             }
 
-            touchDraggedCard = null;
-            draggedElementId = null;
-            isRealDrag = false;
+            // Сбрасываем переменные для следующего жеста
+            touchActiveProductId = null;
+            touchStartCardElement = null;
+            isMovingProduct = false;
         }
 
         // 3. Главная функция перезаписи полки в базе данных
