@@ -819,19 +819,37 @@
             card.addEventListener('touchend', onTouchEnd);
             
             // Настройка для компьютеров (Мышь)
-            card.addEventListener('mousedown', (e) => {
-                if (e.button === 0) onMouseDown(e, item.id); // Активируем только при нажатии левой кнопки мыши
-            });
-            window.addEventListener('mousemove', onMouseMove);
-            window.addEventListener('mouseup', onMouseUp);
+            // Отключаем старый капризный браузерный драг ПК
+            card.draggable = false;
             
-            // НАДЕЖНЫЙ ОНПЛАТФОРМЕННЫЙ КЛИК: срабатывает всегда, если карточку не перетаскивали
-            card.onclick = (e) => {
-                e.stopPropagation();
-                if (!isMovingProduct) {
-                    openProductDetailsModal(item.id);
+            // Настройка для мобильных телефонов (Тач)
+            card.addEventListener('touchstart', (e) => onTouchStart(e, item.id), { passive: true });
+            card.addEventListener('touchmove', (e) => onTouchMove(e), { passive: false });
+            card.addEventListener('touchend', onTouchEnd);
+            
+            // Настройка для компьютеров (Мышь): перенос отслеживаем глобально, а клик ловим локально
+            card.addEventListener('mousedown', (e) => {
+                if (e.button === 0) onMouseDown(e, item.id);
+            });
+            
+            window.addEventListener('mousemove', onMouseMove);
+            
+            window.addEventListener('mouseup', (e) => {
+                if (isMouseDown) {
+                    isMouseDown = false;
+                    
+                    // ЕСЛИ ЭТО БЫЛ ПРОСТО КЛИК НА ПК: мышка нажата, но фантом переноса не включился
+                    if (!isMovingProduct && touchActiveProductId === String(item.id)) {
+                        if (touchTimer) clearTimeout(touchTimer);
+                        openProductDetailsModal(item.id); // Мгновенно открываем карточку!
+                        touchActiveProductId = null;
+                        touchStartCardElement = null;
+                    } else {
+                        // Если это был реальный перенос, вызываем стандартное завершение драга
+                        endDragLogic(e.clientX, e.clientY);
+                    }
                 }
-            };
+            });
             
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
