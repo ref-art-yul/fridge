@@ -2428,16 +2428,29 @@
         // МОДУЛЬ DRAG & DROP: Перетаскивание продуктов на ПК и мобильных телефонах
 
         // 1. Обработка для ПК (HTML5 Drag and Drop)
+        // ИСПРАВЛЕННЫЙ МОДУЛЬ ПЕРЕТАСКИВАНИЯ ДЛЯ ПК (Намертво привязан к HTML-атрибутам)
         function onDragStart(event, productId) {
-            draggedElementId = productId;
-            event.dataTransfer.setData('text/plain', productId);
-            // Добавляем легкую прозрачность карточке при старте переноса
-            setTimeout(() => event.target.style.opacity = '0.4', 0);
+            // Берем ID и принудительно сохраняем его в глобальную переменную как чистую строку
+            draggedElementId = String(productId).trim();
+            
+            if (event.dataTransfer) {
+                event.dataTransfer.setData('text/plain', draggedElementId);
+                event.dataTransfer.effectAllowed = 'move';
+            }
+            
+            // Находим саму карточку и делаем ее полупрозрачной при переносе мыши
+            const card = event.target.closest('.product-card');
+            if (card) {
+                setTimeout(() => card.style.opacity = '0.4', 0);
+            }
         }
 
         function onDragEnd(event) {
-            event.target.style.opacity = '1';
-            draggedElementId = null;
+            const card = event.target.closest('.product-card');
+            if (card) {
+                card.style.opacity = '1';
+            }
+            draggedElementId = null; // Очищаем глобальную переменную после окончания драга
         }
 
         function onDragOver(event) {
@@ -2465,9 +2478,26 @@
             const shelfBorder = event.target.closest('.shelf-border');
             if (shelfBorder) shelfBorder.classList.remove('shelf-hover');
 
-            // Защита: сначала пробуем взять ID из безопасной переменной, а если пусто — из dataTransfer
-            const productId = draggedElementId || event.dataTransfer.getData('text/plain');
-            if (!productId) return;
+            // СУПЕР-ЗАЩИТА: Сначала берем ID из глобальной переменной. 
+            // Если браузер ПК её стёр, берем ID напрямую из HTML-атрибута 'data-id' перетаскиваемого элемента!
+            let productId = draggedElementId;
+            
+            if (!productId && event.dataTransfer) {
+                productId = event.dataTransfer.getData('text/plain');
+            }
+            
+            // Если и там пусто, вытаскиваем ID прямо из структуры HTML-документа ПК
+            if (!productId) {
+                const draggedCard = document.querySelector('.product-card[style*="opacity: 0.4"]');
+                if (draggedCard) {
+                    productId = draggedCard.getAttribute('data-id');
+                }
+            }
+
+            if (!productId) {
+                console.error("Критическая ошибка ПК-движка: не удалось считать ID карточки при сбросе");
+                return;
+            }
 
             executeProductMove(productId, targetShelfName);
         }
