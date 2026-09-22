@@ -2906,6 +2906,74 @@
             }
         }
 
+        // УМНОЕ ЗАКРЫТИЕ МОДАЛЬНЫХ ОКНО ПО КЛИКУ НА ПОЛУПРОЗРАЧНЫЙ ФОН (ОВЕРЛЕЙ)
+        function setupOverlayClickClosers() {
+            // Список всех модальных окон в приложении
+            const overlays = [
+                { id: 'addProductModal', closeFunc: closeModal, checkChanges: () => {
+                    // Проверяем окно добавления продукта: если имя пустое, а кол-во=1 и дней=5 — изменений нет
+                    const name = document.getElementById('prodName')?.value.trim();
+                    const qty = parseInt(document.getElementById('prodQty')?.value) || 1;
+                    const days = parseInt(document.getElementById('prodDays')?.value) || 5;
+                    return name || qty !== 1 || days !== 5; // true, если изменения ЕСТЬ
+                }},
+                { id: 'productDetailsModal', closeFunc: closeDetailsModal, checkChanges: () => {
+                    // Окно редактирования продукта: берем ID из вашей глобальной переменной activeEditingProductId
+                    if (typeof activeEditingProductId === 'undefined' || !activeEditingProductId) return false;
+                    const original = products.find(p => String(p.id).trim() === String(activeEditingProductId).trim());
+                    if (!original) return false;
+                    
+                    // Считываем текущие значения из полей формы (используя ваши точные ID: detailsName, detailsQty, detailsDays)
+                    const name = document.getElementById('detailsName')?.value.trim();
+                    const qty = parseInt(document.getElementById('detailsQty')?.value) || 1;
+                    const daysInput = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
+                    const days = daysInput ? parseInt(daysInput.value) || 0 : 0;
+                    
+                    // Получаем имя текущей выбранной полки. Если у вас для этого есть функция или переменная, 
+                    // мы сравниваем её. Если нет — проверяем пока только Название, Количество и Дни:
+                    return name !== original.name || qty !== original.qty || days !== original.daysLeft;
+                }},
+                { id: 'addRecipeModal', closeFunc: closeRecipeModal, checkChanges: () => {
+                    const name = document.getElementById('recipeName')?.value.trim();
+                    return !!name; // Если имя рецепта начали писать — считаем, что изменения есть
+                }},
+                { id: 'editRecipeModal', closeFunc: closeEditRecipeModal, checkChanges: () => {
+                    // Окно редактирования рецепта (упрощенная защита: если открыто, блокируем закрытие при наличии текста)
+                    const name = document.getElementById('editRecName')?.value.trim();
+                    return !!name; 
+                }},
+                { id: 'settingsModal', closeFunc: closeSettingsModal, checkChanges: () => false } // Настройки можно закрывать всегда
+            ];
+
+            overlays.forEach(modal => {
+                const overlayElement = document.getElementById(modal.id);
+                if (!overlayElement) return;
+
+                // Слушаем клик на всем оверлее
+                overlayElement.addEventListener('click', (e) => {
+                    // Клик сработал строго на полупрозрачном фоне, а не внутри белого контента окна
+                    if (e.target === overlayElement) {
+                        const hasChanges = modal.checkChanges();
+                        
+                        if (hasChanges) {
+                            // Если пользователь что-то ввел, мягко предупреждаем его всплывашкой браузера
+                            if (confirm("Закрыть окно? Внесенные изменения не сохранятся.")) {
+                                modal.closeFunc();
+                            }
+                        } else {
+                            // Если всё пустое или без изменений — закрываем мгновенно без вопросов
+                            modal.closeFunc();
+                        }
+                    }
+                });
+            });
+        }
+
+        // Автоматически запускаем настройку кликов при старте приложения
+        document.addEventListener('DOMContentLoaded', setupOverlayClickClosers);
+        // На случай, если DOMContentLoaded уже прошел на Vercel, дублируем прямой вызов
+        setupOverlayClickClosers();
+
         // Самая финальная инициализация всего приложения при старте страницы
         render();
 
