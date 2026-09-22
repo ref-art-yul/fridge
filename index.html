@@ -832,7 +832,18 @@
                     openProductDetailsModal(item.id);
                 }
             };
-            
+
+            // ТОЧЕЧНОЕ ИСПРАВЛЕНИЕ КЛИКА НА ПК: открывает модалку при отпускании мыши, если не было переноса
+            card.addEventListener('mouseup', (e) => {
+                // Вызываем открытие только на ПК (если это левая кнопка мыши и флаг мобильного движения выключен)
+                if (e.button === 0 && typeof isMovingProduct !== 'undefined' && !isMovingProduct) {
+                    // Проверяем, что в эту секунду не запущен глобальный drag-and-drop на ПК
+                    if (typeof draggedElementId === 'undefined' || !draggedElementId) {
+                        openProductDetailsModal(item.id);
+                    }
+                }
+            });
+
             // Настраиваем правый текстовый блок (дни или наклейка)
             let daysHTML = '';
             if (isSpoiled) {
