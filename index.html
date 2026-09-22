@@ -832,42 +832,81 @@
             
             // Настройка для компьютеров (Мышь)
             
-            // Системная переменная для разделения клика и драга на ПК (локальный таймер)
-            let clickVsDragTimer = null;
+            // Системные переменные для фиксации стартовой точки клика на ПК
+            let mouseStartX = 0;
+            let mouseStartY = 0;
 
             // Настройка для компьютеров (Мышь)
             card.addEventListener('mousedown', (e) => {
                 // Работаем строго с левой кнопкой мыши на ПК (e.button === 0)
                 if (e.button !== 0 || e.clientX === 0) return;
 
-                if (clickVsDragTimer) clearTimeout(clickVsDragTimer);
                 isMouseDown = true;
-
-                // ЗАПУСКАЕМ МИКРОЗАДЕРЖКУ (150 мс). Драг включится, только если мышку удерживают
-                clickVsDragTimer = setTimeout(() => {
-                    // 150 мс прошло, кнопка все еще зажата — значит, включаем РЕАЛЬНОЕ ПЕРЕТАСКИВАНИЕ
-                    if (isMouseDown) {
-                        startDragLogic(e.clientX, e.clientY, item.id, card, false);
-                    }
-                }, 150); // 150 мс — идеальный микроинтервал, незаметный глазу
+                isMovingProduct = false; // Сбрасываем флаг переноса для нового клика
+                
+                // Фиксируем точные координаты, где пользователь нажал мышку
+                mouseStartX = e.clientX;
+                mouseStartY = e.clientY;
+                
+                // Предварительно записываем ID, чтобы система знала, какую карточку зажали
+                touchActiveProductId = String(item.id).trim();
+                touchStartCardElement = card;
             });
 
-            window.addEventListener('mousemove', onMouseMove);
+            window.addEventListener('mousemove', (e) => {
+                if (!isMouseDown || !touchActiveProductId || !touchStartCardElement) return;
+
+                // Если реальный перенос ЕЩЕ НЕ включился, проверяем сдвиг мыши в пикселях
+                if (!isMovingProduct) {
+                    const moveDeltaX = Math.abs(e.clientX - mouseStartX);
+                    const moveDeltaY = Math.abs(e.clientY - mouseStartY);
+                    
+                    // Если мышка сдвинулась больше чем на 6 пикселей — пользователь ОСОЗНАННО тащит плашку
+                    if (moveDeltaX > 6 || moveDeltaY > 6) {
+                        isMovingProduct = true;
+                        
+                        // Мгновенно создаем красивый фантом под курсором без каких-либо задержек времени!
+                        if (touchStartCardElement) touchStartCardElement.style.opacity = '0.3';
+
+                        touchGhostElement = document.createElement('div');
+                        touchGhostElement.style.position = 'fixed';
+                        touchGhostElement.style.width = '56px';
+                        touchGhostElement.style.height = '56px';
+                        touchGhostElement.style.zIndex = '9999';
+                        touchGhostElement.style.pointerEvents = 'none';
+                        touchGhostElement.style.opacity = '0.9';
+                        touchGhostElement.style.backgroundColor = '#ffffff';
+                        touchGhostElement.style.border = '2px solid #4f46e5';
+                        touchGhostElement.style.borderRadius = '0.5rem';
+                        touchGhostElement.style.boxShadow = '0 10px 25px rgba(79, 70, 229, 0.3)';
+                        touchGhostElement.style.display = 'flex';
+                        touchGhostElement.style.alignItems = 'center';
+                        touchGhostElement.style.justifyContent = 'center';
+                        
+                        const currentEmoji = touchStartCardElement.querySelector('.product-emoji')?.textContent || '📦';
+                        touchGhostElement.innerHTML = `<span style="font-size: 1.75rem; line-height: 1;">${currentEmoji}</span>`;
+                        
+                        document.body.appendChild(touchGhostElement);
+                    }
+                }
+
+                // Если перенос уже активен — плавно двигаем фантом за курсором ПК
+                if (isMovingProduct) {
+                    moveDragLogic(e, e.clientX, e.clientY);
+                }
+            });
 
             window.addEventListener('mouseup', (e) => {
                 if (isMouseDown) {
                     isMouseDown = false;
-                    
-                    // Мгновенно сжигаем таймер драга при отпускании кнопки
-                    if (clickVsDragTimer) clearTimeout(clickVsDragTimer);
 
-                    // ЕСЛИ РЕЖИМ ПЕРЕНОСА ЕЩЕ НЕ ВКЛЮЧИЛСЯ (пользователь отпустил мышку быстрее 150 мс) — ЭТО ЧИСТЫЙ КЛИК!
+                    // ЕСЛИ МЫШКА НЕ СДВИГАЛАСЬ (isMovingProduct остался false) — ЭТО МГНОВЕННЫЙ ЧИСТЫЙ КЛИК НА ПК!
                     if (!isMovingProduct) {
                         openProductDetailsModal(item.id); // Безотказно открываем карточку!
                         touchActiveProductId = null;
                         touchStartCardElement = null;
                     } else {
-                        // Если это был долгий осознанный перенос — фиксируем его на полке
+                        // Если это был реальный перенос мыши — фиксируем продукт на новой полке
                         endDragLogic(e.clientX, e.clientY);
                     }
                 }
