@@ -813,6 +813,18 @@
             // Отключаем старый капризный браузерный драг ПК, так как теперь мышь работает через фантомный движок
             card.draggable = false;
             
+            // НАДЕЖНЫЙ КЛИК ДЛЯ ПК: открывает карточку при отпускании мыши, если плашку не перетаскивали
+            card.addEventListener('mouseup', (e) => {
+                // e.button === 0 — это строго левая кнопка мыши
+                // clientX !== 0 защищает от ложных тач-срабатываний мобильного телефона
+                if (e.button === 0 && e.clientX !== 0) {
+                    // Если флаг движения ИИ-продукта (isMovingProduct) в эту секунду выключен — открываем модалку!
+                    if (typeof isMovingProduct === 'undefined' || !isMovingProduct) {
+                        openProductDetailsModal(item.id);
+                    }
+                }
+            });
+            
             // Настройка для мобильных телефонов (Тач)
             card.addEventListener('touchstart', (e) => onTouchStart(e, item.id), { passive: true });
             card.addEventListener('touchmove', (e) => onTouchMove(e), { passive: false });
