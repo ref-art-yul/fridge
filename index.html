@@ -2917,7 +2917,15 @@
                     const days = parseInt(document.getElementById('prodDays')?.value) || 5;
                     return name || qty !== 1 || days !== 5; // true, если изменения ЕСТЬ
                 }},
-                { id: 'productDetailsModal', closeFunc: closeDetailsModal, checkChanges: () => {
+                { id: 'productDetailsModal', closeFunc: () => {
+                    // Проверяем все возможные варианты имени функции закрытия окна деталей в вашем коде
+                    if (typeof closeProductDetailsModal === 'function') closeProductDetailsModal();
+                    else if (typeof closeDetailsModal === 'function') closeDetailsModal();
+                    else {
+                        // Если функции не найдены, просто прячем окно через нативный класс hidden
+                        document.getElementById('productDetailsModal')?.classList.add('hidden');
+                    }
+                }, checkChanges: () => {
                     // Окно редактирования продукта: берем ID из вашей глобальной переменной activeEditingProductId
                     if (typeof activeEditingProductId === 'undefined' || !activeEditingProductId) return false;
                     const original = products.find(p => String(p.id).trim() === String(activeEditingProductId).trim());
