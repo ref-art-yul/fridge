@@ -2906,86 +2906,117 @@
             }
         }
 
-        // БРОНЕБОЙНОЕ УМНОЕ ЗАКРЫТИЕ ОКНО ПО КЛИКУ НА ФОН (ПК + ТЕЛЕФОНЫ)
+        // БРОНЕБОЙНОЕ УМНОЕ ЗАКРЫТИЕ ОКНО ПО КЛИКУ НА ФОН (ПК + ТЕЛЕФОНЫ) С ИДЕАЛЬНЫМ UX
         function setupOverlayClickClosers() {
             const overlays = [
-                { id: 'addProductModal', closeFunc: () => {
-                    if (typeof closeModal === 'function') closeModal();
-                    else document.getElementById('addProductModal')?.classList.add('hidden');
-                }, checkChanges: () => {
-                    const name = document.getElementById('prodName')?.value.trim();
-                    const qty = parseInt(document.getElementById('prodQty')?.value) || 1;
-                    const days = parseInt(document.getElementById('prodDays')?.value) || 5;
-                    return name || qty !== 1 || days !== 5;
-                }},
-                { id: 'productDetailsModal', closeFunc: () => {
-                    if (typeof closeProductDetailsModal === 'function') closeProductDetailsModal();
-                    else if (typeof closeDetailsModal === 'function') closeDetailsModal();
-                    else document.getElementById('productDetailsModal')?.classList.add('hidden');
-                }, checkChanges: () => {
-                    if (typeof activeEditingProductId === 'undefined' || !activeEditingProductId) return false;
-                    const original = products.find(p => String(p.id).trim() === String(activeEditingProductId).trim());
-                    if (!original) return false;
-                    const name = document.getElementById('detailsName')?.value.trim();
-                    const qty = parseInt(document.getElementById('detailsQty')?.value) || 1;
-                    const daysInput = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
-                    const days = daysInput ? parseInt(daysInput.value) || 0 : 0;
-                    return name !== original.name || qty !== original.qty || days !== original.daysLeft;
-                }},
-                { id: 'addRecipeModal', closeFunc: () => {
-                    if (typeof closeRecipeModal === 'function') closeRecipeModal();
-                    else if (typeof hideRecipeModal === 'function') hideRecipeModal();
-                    else document.getElementById('addRecipeModal')?.classList.add('hidden');
-                }, checkChanges: () => {
-                    const name = document.getElementById('recipeName')?.value.trim();
-                    return !!name;
-                }},
-                { id: 'editRecipeModal', closeFunc: () => {
-                    if (typeof closeEditRecipeModal === 'function') closeEditRecipeModal();
-                    else document.getElementById('editRecipeModal')?.classList.add('hidden');
-                }, checkChanges: () => {
-                    const name = document.getElementById('editRecName')?.value.trim();
-                    return !!name; 
-                }},
-                { id: 'settingsModal', closeFunc: () => {
-                    if (typeof closeSettingsModal === 'function') closeSettingsModal();
-                    else document.getElementById('settingsModal')?.classList.add('hidden');
-                }, checkChanges: () => false }
+                { 
+                    id: 'addProductModal', 
+                    closeFunc: () => {
+                        if (typeof closeModal === 'function') closeModal();
+                        else document.getElementById('addProductModal')?.classList.add('hidden');
+                    }, 
+                    submitFunc: () => {
+                        if (typeof saveProduct === 'function') saveProduct();
+                    },
+                    checkChanges: () => {
+                        const name = document.getElementById('prodName')?.value.trim();
+                        const qty = parseInt(document.getElementById('prodQty')?.value) || 1;
+                        const days = parseInt(document.getElementById('prodDays')?.value) || 5;
+                        return name || qty !== 1 || days !== 5;
+                    }
+                },
+                { 
+                    id: 'productDetailsModal', 
+                    closeFunc: () => {
+                        if (typeof closeProductDetailsModal === 'function') closeProductDetailsModal();
+                        else if (typeof closeDetailsModal === 'function') closeDetailsModal();
+                        else document.getElementById('productDetailsModal')?.classList.add('hidden');
+                    }, 
+                    submitFunc: () => {
+                        if (typeof saveProductDetails === 'function') saveProductDetails();
+                    },
+                    checkChanges: () => {
+                        if (typeof activeEditingProductId === 'undefined' || !activeEditingProductId) return false;
+                        const original = products.find(p => String(p.id).trim() === String(activeEditingProductId).trim());
+                        if (!original) return false;
+                        const name = document.getElementById('detailsName')?.value.trim();
+                        const qty = parseInt(document.getElementById('detailsQty')?.value) || 1;
+                        const daysInput = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
+                        const days = daysInput ? parseInt(daysInput.value) || 0 : 0;
+                        return name !== original.name || qty !== original.qty || days !== original.daysLeft;
+                    }
+                },
+                { 
+                    id: 'addRecipeModal', 
+                    closeFunc: () => {
+                        if (typeof closeRecipeModal === 'function') closeRecipeModal();
+                        else if (typeof hideRecipeModal === 'function') hideRecipeModal();
+                        else document.getElementById('addRecipeModal')?.classList.add('hidden');
+                    }, 
+                    submitFunc: () => {
+                        if (typeof saveRecipe === 'function') saveRecipe();
+                    },
+                    checkChanges: () => {
+                        const name = document.getElementById('recipeName')?.value.trim();
+                        return !!name;
+                    }
+                },
+                { 
+                    id: 'editRecipeModal', 
+                    closeFunc: () => {
+                        if (typeof closeEditRecipeModal === 'function') closeEditRecipeModal();
+                        else document.getElementById('editRecipeModal')?.classList.add('hidden');
+                    }, 
+                    submitFunc: () => {
+                        if (typeof saveEditRecipeDetails === 'function') saveEditRecipeDetails();
+                    },
+                    checkChanges: () => {
+                        const name = document.getElementById('editRecName')?.value.trim();
+                        return !!name; 
+                    }
+                },
+                { 
+                    id: 'settingsModal', 
+                    closeFunc: () => {
+                        if (typeof closeSettingsModal === 'function') closeSettingsModal();
+                        else document.getElementById('settingsModal')?.classList.add('hidden');
+                    }, 
+                    submitFunc: () => {}, 
+                    checkChanges: () => false 
+                }
             ];
 
             overlays.forEach(modal => {
                 const overlayElement = document.getElementById(modal.id);
                 if (!overlayElement) return;
 
-                // Для мобильных телефонов включаем CSS-подсказку активного клика
                 overlayElement.style.cursor = 'pointer';
 
-                // Универсальный обработчик клика/тача мимо окна
                 const handleOverlayClose = (e) => {
                     if (e.target === overlayElement) {
                         e.preventDefault();
                         e.stopPropagation();
                         
-                        // Если в этот момент идет перетаскивание на мобилке, не закрываем окно
                         if (typeof isMovingProduct !== 'undefined' && isMovingProduct) return;
 
                         if (modal.checkChanges()) {
-                            if (confirm("Закрыть окно? Внесенные изменения не сохранятся.")) {
-                                modal.closeFunc();
+                            // ИДЕАЛЬНЫЙ UX: Переворачиваем логику вопроса, делая её интуитивной
+                            if (confirm("Сохранить внесенные изменения перед закрытием?\n\n«ОК» — Сохранить изменения\n«Отмена» — Закрыть без сохранения")) {
+                                modal.submitFunc(); // Пользователь нажал ОК -> Сохраняем форму
+                            } else {
+                                modal.closeFunc();  // Пользователь нажал Отмена -> Сбрасываем изменения и просто закрываем окно
                             }
                         } else {
-                            modal.closeFunc();
+                            modal.closeFunc(); // Если изменений нет — закрываем мгновенно и молча
                         }
                     }
                 };
 
-                // Привязываем события для ПК (click) и для мобильных телефонов (touchstart)
                 overlayElement.addEventListener('click', handleOverlayClose);
                 overlayElement.addEventListener('touchstart', handleOverlayClose, { passive: false });
             });
         }
 
-        // Автоматический запуск при старте приложения
         document.addEventListener('DOMContentLoaded', setupOverlayClickClosers);
         setupOverlayClickClosers();
 
