@@ -2906,80 +2906,87 @@
             }
         }
 
-        // УМНОЕ ЗАКРЫТИЕ МОДАЛЬНЫХ ОКНО ПО КЛИКУ НА ПОЛУПРОЗРАЧНЫЙ ФОН (ОВЕРЛЕЙ)
+        // БРОНЕБОЙНОЕ УМНОЕ ЗАКРЫТИЕ ОКНО ПО КЛИКУ НА ФОН (ПК + ТЕЛЕФОНЫ)
         function setupOverlayClickClosers() {
-            // Список всех модальных окон в приложении
             const overlays = [
-                { id: 'addProductModal', closeFunc: closeModal, checkChanges: () => {
-                    // Проверяем окно добавления продукта: если имя пустое, а кол-во=1 и дней=5 — изменений нет
+                { id: 'addProductModal', closeFunc: () => {
+                    if (typeof closeModal === 'function') closeModal();
+                    else document.getElementById('addProductModal')?.classList.add('hidden');
+                }, checkChanges: () => {
                     const name = document.getElementById('prodName')?.value.trim();
                     const qty = parseInt(document.getElementById('prodQty')?.value) || 1;
                     const days = parseInt(document.getElementById('prodDays')?.value) || 5;
-                    return name || qty !== 1 || days !== 5; // true, если изменения ЕСТЬ
+                    return name || qty !== 1 || days !== 5;
                 }},
                 { id: 'productDetailsModal', closeFunc: () => {
-                    // Проверяем все возможные варианты имени функции закрытия окна деталей в вашем коде
                     if (typeof closeProductDetailsModal === 'function') closeProductDetailsModal();
                     else if (typeof closeDetailsModal === 'function') closeDetailsModal();
-                    else {
-                        // Если функции не найдены, просто прячем окно через нативный класс hidden
-                        document.getElementById('productDetailsModal')?.classList.add('hidden');
-                    }
+                    else document.getElementById('productDetailsModal')?.classList.add('hidden');
                 }, checkChanges: () => {
-                    // Окно редактирования продукта: берем ID из вашей глобальной переменной activeEditingProductId
                     if (typeof activeEditingProductId === 'undefined' || !activeEditingProductId) return false;
                     const original = products.find(p => String(p.id).trim() === String(activeEditingProductId).trim());
                     if (!original) return false;
-                    
-                    // Считываем текущие значения из полей формы (используя ваши точные ID: detailsName, detailsQty, detailsDays)
                     const name = document.getElementById('detailsName')?.value.trim();
                     const qty = parseInt(document.getElementById('detailsQty')?.value) || 1;
                     const daysInput = document.getElementById('detailsDays') || document.querySelector('.details-days-input');
                     const days = daysInput ? parseInt(daysInput.value) || 0 : 0;
-                    
-                    // Получаем имя текущей выбранной полки. Если у вас для этого есть функция или переменная, 
-                    // мы сравниваем её. Если нет — проверяем пока только Название, Количество и Дни:
                     return name !== original.name || qty !== original.qty || days !== original.daysLeft;
                 }},
-                { id: 'addRecipeModal', closeFunc: closeRecipeModal, checkChanges: () => {
+                { id: 'addRecipeModal', closeFunc: () => {
+                    if (typeof closeRecipeModal === 'function') closeRecipeModal();
+                    else if (typeof hideRecipeModal === 'function') hideRecipeModal();
+                    else document.getElementById('addRecipeModal')?.classList.add('hidden');
+                }, checkChanges: () => {
                     const name = document.getElementById('recipeName')?.value.trim();
-                    return !!name; // Если имя рецепта начали писать — считаем, что изменения есть
+                    return !!name;
                 }},
-                { id: 'editRecipeModal', closeFunc: closeEditRecipeModal, checkChanges: () => {
-                    // Окно редактирования рецепта (упрощенная защита: если открыто, блокируем закрытие при наличии текста)
+                { id: 'editRecipeModal', closeFunc: () => {
+                    if (typeof closeEditRecipeModal === 'function') closeEditRecipeModal();
+                    else document.getElementById('editRecipeModal')?.classList.add('hidden');
+                }, checkChanges: () => {
                     const name = document.getElementById('editRecName')?.value.trim();
                     return !!name; 
                 }},
-                { id: 'settingsModal', closeFunc: closeSettingsModal, checkChanges: () => false } // Настройки можно закрывать всегда
+                { id: 'settingsModal', closeFunc: () => {
+                    if (typeof closeSettingsModal === 'function') closeSettingsModal();
+                    else document.getElementById('settingsModal')?.classList.add('hidden');
+                }, checkChanges: () => false }
             ];
 
             overlays.forEach(modal => {
                 const overlayElement = document.getElementById(modal.id);
                 if (!overlayElement) return;
 
-                // Слушаем клик на всем оверлее
-                overlayElement.addEventListener('click', (e) => {
-                    // Клик сработал строго на полупрозрачном фоне, а не внутри белого контента окна
+                // Для мобильных телефонов включаем CSS-подсказку активного клика
+                overlayElement.style.cursor = 'pointer';
+
+                // Универсальный обработчик клика/тача мимо окна
+                const handleOverlayClose = (e) => {
                     if (e.target === overlayElement) {
-                        const hasChanges = modal.checkChanges();
+                        e.preventDefault();
+                        e.stopPropagation();
                         
-                        if (hasChanges) {
-                            // Если пользователь что-то ввел, мягко предупреждаем его всплывашкой браузера
+                        // Если в этот момент идет перетаскивание на мобилке, не закрываем окно
+                        if (typeof isMovingProduct !== 'undefined' && isMovingProduct) return;
+
+                        if (modal.checkChanges()) {
                             if (confirm("Закрыть окно? Внесенные изменения не сохранятся.")) {
                                 modal.closeFunc();
                             }
                         } else {
-                            // Если всё пустое или без изменений — закрываем мгновенно без вопросов
                             modal.closeFunc();
                         }
                     }
-                });
+                };
+
+                // Привязываем события для ПК (click) и для мобильных телефонов (touchstart)
+                overlayElement.addEventListener('click', handleOverlayClose);
+                overlayElement.addEventListener('touchstart', handleOverlayClose, { passive: false });
             });
         }
 
-        // Автоматически запускаем настройку кликов при старте приложения
+        // Автоматический запуск при старте приложения
         document.addEventListener('DOMContentLoaded', setupOverlayClickClosers);
-        // На случай, если DOMContentLoaded уже прошел на Vercel, дублируем прямой вызов
         setupOverlayClickClosers();
 
         // Самая финальная инициализация всего приложения при старте страницы
