@@ -3000,11 +3000,11 @@
                         if (typeof isMovingProduct !== 'undefined' && isMovingProduct) return;
 
                         if (modal.checkChanges()) {
-                            // ТОЧНАЯ КОРОТКАЯ ФОРМУЛИРОВКА С ДЕШИФРОВКОЙ КНОПОК БРАУЗЕРА
-                            if (confirm("Сохранить внесенные изменения?\n\n[Сохранить] — Нажмите ОК\n[Отмена] — Нажмите Отмена")) {
-                                modal.submitFunc(); // Сохранить
+                            // ИДЕАЛЬНО ТОЧНЫЙ КРАТКИЙ ВОПРОС
+                            if (confirm("Сохранить внесенные изменения?")) {
+                                modal.submitFunc(); // Сохранить (нажата кнопка ОК в браузере)
                             } else {
-                                modal.closeFunc();  // Отмена (закрыть без сохранения)
+                                modal.closeFunc();  // Отмена без сохранения (нажата кнопка Отмена в браузере)
                             }
                         } else {
                             modal.closeFunc();
